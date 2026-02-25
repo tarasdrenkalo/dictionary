@@ -1,0 +1,40 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    "types": ["node"],
+      // File Layout
+    "rootDir": "./src",
+    // Environment Settings
+    // // See also https://aka.ms/tsconfig/module
+    "module": "nodenext", //esnext
+    "target": "esnext", //esnext
+    // "types": [],
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "moduleResolution": "nodenext", //bundler
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Recommended Options
+      "strict": true,
+      "jsx": "react-jsx",
+      "verbatimModuleSyntax": false,
+      "isolatedModules": true,
+      "noUncheckedSideEffectImports": true,
+      "moduleDetection": "force",
+      "skipLibCheck": true,
+      "outDir": "./build",
+  },
+}

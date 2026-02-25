@@ -35,11 +35,12 @@ bower_components
 .lock-wscript
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
-build/Release
+build/
 
 # Dependency directories
 node_modules/
 jspm_packages/
+doc/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/

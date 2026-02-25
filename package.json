@@ -1,0 +1,16 @@
+{
+  "name": "dictionary",
+  "version": "1.0.0",
+  "description": "Test",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "typescript": "^5.9.3"
+  },
+  "type": "module",
+  "dependencies": {
+    "node": "^25.6.1"
+  }
+}
