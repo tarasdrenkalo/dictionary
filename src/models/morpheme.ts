@@ -145,7 +145,7 @@ export class Morpheme {
       return {
         Grapheme: g,
         Phoneme: {
-          State: "ambiguous",
+          State: "Ambiguous",
           Options: options
         }
       };
@@ -165,7 +165,7 @@ export class Morpheme {
     return {
       Grapheme: g,
       Phoneme: {
-        State: "resolved",
+        State: "Resolved",
         Symbol: ipa,
         IsVowel: isVowel,
         IsShort: isVowel ? isShort : false,

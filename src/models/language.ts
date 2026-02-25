@@ -275,7 +275,7 @@ export type Grapheme =
   | {
       Grapheme: GraphemeSymbol;
       Phoneme: {
-        State: "resolved";
+        State: "Resolved";
         Symbol: GraphemeSpelling;
         IsVowel: boolean;
         IsShort?: boolean;
@@ -285,14 +285,14 @@ export type Grapheme =
   | {
       Grapheme: GraphemeSymbol;
       Phoneme: {
-        State: "ambiguous";
+        State: "Ambiguous";
         Options: GraphemeSpelling[];
       };
     }
   | {
       Grapheme: GraphemeSymbol;
       Phoneme: {
-        State: "silent";
+        State: "Silent";
       };
     };
 
@@ -300,8 +300,8 @@ export interface Language {
     Name:string,
     GetLetters(): Array<keyof Letter>;
     HasLetter(l: keyof Letter): boolean;
-    GetOrderByLetter(l: keyof Letter): number | false;
-    GetLetterByOrder(n: number): keyof Letter | false;
+    GetOrderByLetter(l: keyof Letter): number|undefined;
+    GetLetterByOrder(n: number): keyof Letter|undefined;
 }
 export const English:Language = {
     Name:"English",
@@ -316,11 +316,11 @@ export const English:Language = {
     },
     GetLetterByOrder(n:number) {
         const l =  this.GetLetters()[n];
-        return typeof(l) !=="undefined" ? l : false;
+        return typeof l !=="undefined" ? l : void l;
     },
-    GetOrderByLetter(l:keyof Letter): number|false {
+    GetOrderByLetter(l:keyof Letter): number|undefined {
         const assert = l in this.GetLetters();
-        if(!assert) return false;
+        if(!assert) return void l;
         return this.GetLetters().indexOf(l);
     }
 }
