@@ -156,9 +156,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.Visible = false;
         this.Indexable = false;
         this.HasBias = false;
-        return this;
     }
-    IsBiased: boolean = false;
     Connotation?: string;
     static Create<K extends keyof PartOfSpeech>(pos:K, options:OptionsByPartOfSpeech[K]):PartOfSpeech[K] {
         const Constructors:PartOfSpeech = {
@@ -179,7 +177,6 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         }
         return Constructors[pos];
     }
-    
 }
 export class Interjection extends Word<"Interjection"> {}
 export class Exclamation extends Word<"Exclamation"> {}
