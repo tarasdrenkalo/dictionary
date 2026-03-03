@@ -17,7 +17,7 @@
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
     "moduleResolution": "nodenext", //bundler
     // Style Options
     // "noImplicitReturns": true,

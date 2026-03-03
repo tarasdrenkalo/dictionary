@@ -4,7 +4,7 @@ import { Cases, CaseStructure } from "../../models/cases.js";
 import { Definition, GenericDefinition } from "../../models/definition.js";
 import { English, Grapheme, Language } from "../../models/language.js";
 import { Morpheme, MorphemeStructure } from "../../models/morpheme.js";
-import { AdverbOptions, ConjunctionOptions, DeterminerOptions, NounOptions, OptionsByPartOfSpeech, PersonPerspective, PrepositionOptions, PronounOptions, VerbOptions, WordOptions } from "./options.js";
+import { AdverbOptions, ConjunctionOptions, DeterminerOptions, NounOptions, OptionsByPartOfSpeech, PersonPerspective, PrepositionOptions, PronounOptions, PropernounOptions, VerbOptions, WordOptions } from "./options.js";
 import { AdverbVariant, ConjunctionVariant, DeterminerVariant, PrepositionVariant, PronounVariant } from "./variants.js";
 
 export interface PartOfSpeech {
@@ -32,15 +32,17 @@ export interface UnitWord {
 export interface UnknownWord extends UnitWord {
     Exists:false;
     ExcludeFromWordChoice:true;
-
 }
 export interface WordReference extends UnitWord {
     WordId:string;
+    Exists:true;
 }
 export interface BaseWord extends UnitWord {
+    IsRecordComplete:boolean;
+    HasBias:boolean;
+    Connotation?:string;
     Exists:true;
     UniqueId:string;
-    Name:string;
     POS:keyof PartOfSpeech;
     Language:Language;
     Morpheme:MorphemeStructure;
@@ -58,19 +60,23 @@ export interface BaseWord extends UnitWord {
     IsConjugatable:boolean;
     Meaning:GenericDefinition;
     Thesaurus:string; //TODO
-    Tenses:TenseContainer|null;
-    CurrentTense:TenseType|null;
-    PersonPerspective:PersonPerspective
-    Euphemisms:Array<string>;
-    Cases:CaseStructure|null;
-    CurrentCase:keyof CaseStructure|null;
+    Tenses?:TenseContainer;
+    CurrentTense?:TenseType;
+    PersonPerspective:PersonPerspective;
+    Euphemisms:Array<string|WordReference>;
+    Cases?:CaseStructure;
+    CurrentCase?:keyof CaseStructure;
     IsArchaic:boolean;
     IsNeologism:boolean;
-    Contexts:Array<string>;
+    Contexts:Array<string|WordReference>;
     Category:string;
     IsParasitic:boolean;
+    Visible:boolean;
+    Indexable:boolean;
 }
 export class Word<T extends keyof PartOfSpeech> implements BaseWord {
+    IsRecordComplete: boolean;
+    HasBias: boolean;
     Exists: true;
     UniqueId: string;
     Name: string;
@@ -90,20 +96,23 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsShortened: boolean;
     IsConjugatable: boolean;
     Meaning: GenericDefinition;
-    Thesaurus: string;
-    Tenses: TenseContainer | null;
-    CurrentTense:TenseType | null;
+    Thesaurus: string; //TODO
+    Tenses?: TenseContainer;
+    CurrentTense?:TenseType;
     PersonPerspective: PersonPerspective;
-    Euphemisms: string[];
-    Cases: CaseStructure | null;
-    CurrentCase: keyof CaseStructure | null;
+    Euphemisms: Array<string|WordReference>;
+    Cases?: CaseStructure;
+    CurrentCase?: keyof CaseStructure;
     IsArchaic: boolean;
     IsNeologism: boolean;
-    Contexts: string[];
+    Contexts: Array<string|WordReference>;
     Category: string;
     IsParasitic: boolean;
+    Visible: boolean;
+    Indexable: boolean;
     ExcludeFromWordChoice: boolean;
     constructor(pos:T, options:OptionsByPartOfSpeech[keyof OptionsByPartOfSpeech]){
+        this.IsRecordComplete = false;
         this.Exists = true;
         this.UniqueId = crypto.randomUUID();
         this.Name = options.word;
@@ -132,34 +141,39 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
             lastmodified:Date.now(),
         });
         this.Thesaurus = ""; //TODO
-        this.Tenses = (pos === "Verb" || pos === "Participle") ? Tense.BuildAll(this.Name) : null;
+        this.Tenses = (pos === "Verb" || pos === "Participle") ? Tense.BuildAll(this.Name):undefined;
         this.CurrentTense = "Present Simple";
         this.PersonPerspective = options.personperspective||0;
-        this.Cases = (pos === "Noun") ? Cases.All(this.Name, English) : null;
+        this.Cases = (pos === "Noun") ? Cases.All(this.Name, English) : undefined;
         this.Euphemisms = options.euphemisms||[];
-        this.CurrentCase = null;
+        this.CurrentCase = undefined;
         this.IsArchaic = options.isarchaic||false;
         this.IsNeologism = options.isneologism||false;
         this.Contexts = [""];
-        this.Category = options.category;
+        this.Category = options.category||"";
         this.ExcludeFromWordChoice = options.excludefromwordchoices||false;
         this.IsParasitic = options.isparasitic||false;
+        this.Visible = false;
+        this.Indexable = false;
+        this.HasBias = false;
         return this;
     }
+    IsBiased: boolean = false;
+    Connotation?: string;
     static Create<K extends keyof PartOfSpeech>(pos:K, options:OptionsByPartOfSpeech[K]):PartOfSpeech[K] {
         const Constructors:PartOfSpeech = {
             "Adjective":new Adjective("Adjective", options),
-            "Adverb":new Adverb("Adverb", options),
-            "Conjunction":new Conjunction("Conjunction", options),
-            "Determiner":new Determiner("Determiner", options),
+            "Adverb":new Adverb("Adverb", options as AdverbOptions),
+            "Conjunction":new Conjunction("Conjunction", options as ConjunctionOptions),
+            "Determiner":new Determiner("Determiner", options as DeterminerOptions),
             "Exclamation":new Exclamation("Exclamation", options),
             "Interjection":new Interjection("Interjection", options),
             "Noun":new Noun("Noun", options),
             "Numeral":new Numeral("Numeral", options),
             "Participle":new Participle("Participle", options),
-            "Preposition":new Preposition("Preposition", options),
-            "Pronoun":new Pronoun("Pronoun", options),
-            "Propernoun":new Propernoun("Noun", options),
+            "Preposition":new Preposition("Preposition", options as PrepositionOptions),
+            "Pronoun":new Pronoun("Pronoun", options as PronounOptions),
+            "Propernoun":new Propernoun("Propernoun", options),
             "Verb":new Verb("Verb", options),
             "Unknown":new Word("Unknown", options),
         }
@@ -197,21 +211,21 @@ export class Adjective extends Word<"Adjective"> {
     }
 }
 export class Adverb extends Word<"Adverb">{
-    Kind:AdverbVariant;
+    Kind?:AdverbVariant;
     constructor(pos:"Adverb",options:AdverbOptions) {
         super("Adverb", options);
         this.Kind = options.kind;
     }
 }
 export class Determiner extends Word<"Determiner"> {
-    Kind:DeterminerVariant;
+    Kind?:DeterminerVariant;
     constructor(pos:"Determiner",options:DeterminerOptions) {
         super(pos, options);
         this.Kind = options.kind;
     }
 }
 export class Conjunction extends Word<"Conjunction"> {
-    Kind:ConjunctionVariant;
+    Kind?:ConjunctionVariant;
     constructor(pos: "Conjunction", options:ConjunctionOptions) {
         super(pos, options);
         this.Kind = options.kind;
@@ -270,18 +284,24 @@ export class Participle extends Word<"Participle"> {
     }
 }
 export class Pronoun extends Word<"Pronoun"> {
-    Kind:PronounVariant;
+    Kind?:PronounVariant;
     constructor(pos:"Pronoun",options:PronounOptions){
         super(pos, options);
         this.Kind = options.kind;
     }
 }
 export class Preposition extends Word<"Preposition"> {
-    Kind:PrepositionVariant;
+    Kind?:PrepositionVariant;
     constructor(pos:"Preposition", options:PrepositionOptions) {
         super(pos, options);
         this.Kind = options.kind;
     }
 }
-export class Propernoun extends Noun {}
+export class Propernoun extends Word<"Propernoun"> {
+    Kind!:string;
+    constructor(pos:"Propernoun", options:PropernounOptions){
+        super(pos, options);
+        this.Kind = options.kind||"";
+    }
+}
 export class Numeral extends Word<"Numeral"> {}

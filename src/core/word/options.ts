@@ -2,17 +2,18 @@ import { Gender } from "../../components/gender.js";
 import { TenseType } from "../../components/tense.js";
 import { CaseStructure } from "../../models/cases.js";
 import { Language } from "../../models/language.js";
+import { WordReference } from "./structure.js";
 import { AdverbVariant, ConjunctionVariant, DeterminerVariant, PrepositionVariant, PronounVariant } from "./variants.js";
 export type PersonPerspective = 0|1|2|3;
 export type WordOptions = {
-    kind:any|"";
+    isbiased?:boolean;
+    connotation?:string;
     excludefromwordchoices?:boolean;
     word:string;
     personperspective?:PersonPerspective;
-    meaning:string|HTMLElement;
-    IPA?:string;
+    meaning:string;
     gender?:Gender;
-    derive?:string;
+    derive?:WordReference;
     ispropernoun?:boolean;
     isabbreviation?: boolean;
     iscolloquial?:boolean;
@@ -23,10 +24,10 @@ export type WordOptions = {
     isoffensive?: boolean;
     isshortened?: boolean;
     isconjugatable?: boolean;
-    euphemisms?: Array<string>;
+    euphemisms?: Array<WordReference|string>;
     isarchaic?: boolean;
     isneologism?: boolean;
-    contexts?: Array<string>;
+    contexts?: Array<WordReference|string>;
     category:string;
     isparasitic?:boolean;
     sources?:Array<string>;
@@ -34,13 +35,13 @@ export type WordOptions = {
 }
 
 export type AdverbOptions = WordOptions & {
-    kind:AdverbVariant;
+    kind?:AdverbVariant;
 }
 export type DeterminerOptions = WordOptions & {
-    kind: DeterminerVariant;
+    kind?:DeterminerVariant;
 }
 export type ConjunctionOptions = WordOptions & {
-    kind:ConjunctionVariant;
+    kind?:ConjunctionVariant;
 }
 export type NounOptions = WordOptions & {
     singleonly?:boolean;
@@ -56,13 +57,13 @@ export type VerbOptions = WordOptions & {
     currentense?:TenseType;
 }
 export type PronounOptions = WordOptions & {
-    kind:PronounVariant;
+    kind?:PronounVariant;
 }
 export type PropernounOptions = WordOptions & {
-    kind:string;
+    kind?:string;
 }
 export type PrepositionOptions = WordOptions & {
-    kind:PrepositionVariant;
+    kind?:PrepositionVariant;
 }
 export interface OptionsByPartOfSpeech {
     Adjective: WordOptions;
