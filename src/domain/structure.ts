@@ -1,11 +1,11 @@
-import { Gender } from "../../components/gender.js";
-import { Tense, TenseContainer, TenseType } from "../../components/tense.js";
-import { Cases, CaseStructure } from "../../models/cases.js";
-import { Definition, GenericDefinition } from "../../models/definition.js";
-import { English, Grapheme, Language } from "../../models/language.js";
-import { Morpheme, MorphemeStructure } from "../../models/morpheme.js";
-import { AdverbOptions, ConjunctionOptions, DeterminerOptions, NounOptions, OptionsByPartOfSpeech, PersonPerspective, PrepositionOptions, PronounOptions, PropernounOptions, VerbOptions, WordOptions } from "./options.js";
-import { AdverbVariant, ConjunctionVariant, DeterminerVariant, PrepositionVariant, PronounVariant } from "./variants.js";
+import { CaseStructure, Cases } from "./cases.js";
+import { GenericDefinition, Definition } from "./definition.js";
+import { MorphemeStructure, Morpheme } from "./morpheme.js";
+import { PersonPerspective, OptionsByPartOfSpeech, AdverbOptions, ConjunctionOptions, DeterminerOptions, PrepositionOptions, PronounOptions, WordOptions, NounOptions, VerbOptions, PropernounOptions } from "./options.js";
+import { TenseContainer, TenseType, Tense } from "./tense.js";
+import { Grapheme } from "./utils/grapheme.js";
+import { Language, English } from "./utils/language.js";
+import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
 
 export interface PartOfSpeech {
     "Adjective":Adjective;
@@ -38,16 +38,9 @@ export interface WordReference extends UnitWord {
     Exists:true;
 }
 export interface BaseWord extends UnitWord {
+    Exists:true;
     IsRecordComplete:boolean;
     HasBias:boolean;
-    Connotation?:string;
-    Exists:true;
-    UniqueId:string;
-    POS:keyof PartOfSpeech;
-    Language:Language;
-    Morpheme:MorphemeStructure;
-    IPA:Array<Grapheme>;
-    Gender:Gender;
     IsPropernoun:boolean;
     IsAbbreviation:boolean;
     IsColloquial:boolean;
@@ -58,6 +51,19 @@ export interface BaseWord extends UnitWord {
     IsOffensive:boolean;
     IsShortened:boolean;
     IsConjugatable:boolean;
+    IsArchaic:boolean;
+    IsNeologism:boolean;
+    IsParasitic:boolean;
+    Visible:boolean;
+    Indexable:boolean;
+    Connotation?:Array<string|WordReference>;
+
+    UniqueId:string;
+    POS:keyof PartOfSpeech;
+    Language:Language;
+    Morpheme:MorphemeStructure;
+    IPA:Array<Grapheme>;
+    Gender:Gender;
     Meaning:GenericDefinition;
     Thesaurus:string; //TODO
     Tenses?:TenseContainer;
@@ -66,13 +72,8 @@ export interface BaseWord extends UnitWord {
     Euphemisms:Array<string|WordReference>;
     Cases?:CaseStructure;
     CurrentCase?:keyof CaseStructure;
-    IsArchaic:boolean;
-    IsNeologism:boolean;
     Contexts:Array<string|WordReference>;
     Category:string;
-    IsParasitic:boolean;
-    Visible:boolean;
-    Indexable:boolean;
 }
 export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsRecordComplete: boolean;
@@ -150,14 +151,14 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.IsArchaic = options.isarchaic||false;
         this.IsNeologism = options.isneologism||false;
         this.Contexts = [""];
-        this.Category = options.category||"";
+        this.Category = options.category||"Uncategorised";
         this.ExcludeFromWordChoice = options.excludefromwordchoices||false;
         this.IsParasitic = options.isparasitic||false;
         this.Visible = false;
         this.Indexable = false;
         this.HasBias = false;
     }
-    Connotation?: string;
+    Connotation?: Array<string|WordReference>;
     static Create<K extends keyof PartOfSpeech>(pos:K, options:OptionsByPartOfSpeech[K]):PartOfSpeech[K] {
         const Constructors:PartOfSpeech = {
             "Adjective":new Adjective("Adjective", options),

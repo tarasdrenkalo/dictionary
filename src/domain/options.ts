@@ -1,9 +1,8 @@
-import { Gender } from "../../components/gender.js";
-import { TenseType } from "../../components/tense.js";
-import { CaseStructure } from "../../models/cases.js";
-import { Language } from "../../models/language.js";
+import { CaseStructure } from "./cases.js";
 import { WordReference } from "./structure.js";
-import { AdverbVariant, ConjunctionVariant, DeterminerVariant, PrepositionVariant, PronounVariant } from "./variants.js";
+import { TenseType } from "./tense.js";
+import { Language } from "./utils/language.js";
+import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
 export type PersonPerspective = 0|1|2|3;
 export type WordOptions = {
     isbiased?:boolean;

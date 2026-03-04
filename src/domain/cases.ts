@@ -1,4 +1,4 @@
-import { English, Language } from "./language.js";
+import { English, Language } from "./utils/language.js";
 
 export interface CasePlurality {
     Singular:string;

@@ -1,5 +1,5 @@
-import { IrregularVerbs, IrregularVerb } from "../components/irregverbs.js";
-import { Morpheme } from "./morpheme.js";
+import { IrregularVerbs, IrregularVerb } from "../constants/irregverbs.js";
+import { Morpheme } from "../morpheme.js";
 
 export class Gerund {
   public static ing(word: string):Array<string> {

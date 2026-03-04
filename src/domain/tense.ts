@@ -1,5 +1,6 @@
-import { Gerund } from "../models/gerund.js";
-import { Morpheme } from "../models/morpheme.js";
+import { Morpheme } from "./morpheme.js";
+import { Gerund } from "./utils/gerund.js";
+
 export type TenseTime = "Present"|"Past"|"Future";
 export type TenseType = "Present Simple"|"Present Progressive"|"Present Participle"|"Present Perfect"|
 "Past Simple"|"Past Progressive"|"Past Participle"|"Past Perfect"|

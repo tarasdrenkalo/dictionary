@@ -20,6 +20,7 @@
     "exactOptionalPropertyTypes": false,
     "moduleResolution": "nodenext", //bundler
     // Style Options
+    "noImplicitAny": true,
     // "noImplicitReturns": true,
     // "noImplicitOverride": true,
     // "noUnusedLocals": true,

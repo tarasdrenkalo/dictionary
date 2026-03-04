@@ -1,13 +1,5 @@
-import {
-  English,
-  Grapheme,
-  GraphemeSymbol,
-  GraphemeSpelling,
-  POSSIBLE_SPELLINGS,
-  SHORT_VOWELS,
-  Language,
-  Letter
-} from "./language.js";
+import { GraphemeSpelling, GraphemeSymbol, Grapheme, POSSIBLE_SPELLINGS, SHORT_VOWELS } from "./grapheme.js";
+import { Language, Letter, English } from "./language.js";
 
 export interface MorphemeStructure {
   Word: string;

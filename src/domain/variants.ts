@@ -1,3 +1,4 @@
+export type Gender = "M"|"F"|"N"|"P"|"A"|"U";
 export type GenericVariant = "Undetermined";
 export type AdverbVariant = GenericVariant | "Manner"|"Place"|"Time"|"Degree"|"Frequency";
 export type DeterminerVariant = GenericVariant | "Definite"|"Indefinite"|"Quantifier"|"Demonstrative"|"Distributive"|"Possessive";

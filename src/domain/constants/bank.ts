@@ -1,4 +1,4 @@
-import { PrepositionVariant, PronounVariant } from "./variants.js"
+import { PrepositionVariant, PronounVariant } from "../variants.js"
 
 export const PrepositionWB:Record<string, PrepositionVariant> = {
     'in':"Spatial",
