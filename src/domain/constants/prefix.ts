@@ -1,3 +1,6 @@
+/***
+ * All English Prefixes compiled according to [Wiktionary](https://wiktionary.org/wiki/Appendix:English_prefixes), licenced under [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+ */
 export const Prefix = {
   a:"a",
   ab:"ab",

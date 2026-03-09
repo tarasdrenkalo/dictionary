@@ -1,18 +1,26 @@
-import { PartOfSpeech, Word, WordReference } from "./structure.js";
+import { Words } from "./structure.js";
+export interface ThesaurusAlternatives {
+    Adjective?: Words,
+    Adverb?: Words,
+    Conjunction?: Words,
+    Determiner?: Words,
+    Exclamation?: Words,
+    Interjection?: Words,
+    Noun?: Words,
+    Numeral?: Words,
+    Participle?: Words,
+    Preposition?: Words,
+    Pronoun?: Words,
+    Propernoun?: Words,
+    Verb?: Words,
+    Unknown?: Words,
+}
 
-export let ThesaurusVariants:{[K in keyof PartOfSpeech]:Set<Word<keyof PartOfSpeech>|WordReference>} = {
-    Adjective: new Set(),
-    Adverb: new Set(),
-    Conjunction: new Set(),
-    Determiner: new Set(),
-    Exclamation: new Set(),
-    Interjection: new Set(),
-    Noun: new Set(),
-    Numeral: new Set(),
-    Participle: new Set(),
-    Preposition: new Set(),
-    Pronoun: new Set(),
-    Propernoun: new Set(),
-    Verb: new Set(),
-    Unknown: new Set(),
+
+export interface Thesaurus {
+    Synonyms?:Words,
+    Antonyms?:Words,
+    Omonyms?:Words,
+    Paronyms?:Words,
+    Alternatives?: ThesaurusAlternatives,
 }

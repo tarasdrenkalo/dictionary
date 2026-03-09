@@ -1,3 +1,6 @@
+/***
+ * All English Suffixes compiled according to [Wiktionary](https://wiktionary.org/wiki/Appendix:English_suffixes), licenced under [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+ */
 export const Suffix = {
     a:"a",
     ab:"ab",

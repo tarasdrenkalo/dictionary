@@ -1,11 +1,15 @@
 import { CaseStructure, Cases } from "./cases.js";
 import { GenericDefinition, Definition } from "./definition.js";
-import { MorphemeStructure, Morpheme } from "./morpheme.js";
 import { PersonPerspective, OptionsByPartOfSpeech, AdverbOptions, ConjunctionOptions, DeterminerOptions, PrepositionOptions, PronounOptions, WordOptions, NounOptions, VerbOptions, PropernounOptions } from "./options.js";
 import { TenseContainer, TenseType, Tense } from "./tense.js";
+import { Thesaurus } from "./thesaurus.js";
 import { Grapheme } from "./utils/grapheme.js";
 import { Language, English } from "./utils/language.js";
+import { MorphemeStructure, Morpheme } from "./utils/morpheme.js";
 import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
+
+
+export type Words = Set<Word<keyof PartOfSpeech>|WordReference|string>|Array<Word<keyof PartOfSpeech>|WordReference|string>;
 
 export interface PartOfSpeech {
     "Adjective":Adjective;
@@ -24,16 +28,16 @@ export interface PartOfSpeech {
     "Unknown":Word<"Unknown">;
 }
 
-export interface UnitWord {
+export type UnitWord = {
     Name:string;
     Exists:boolean;
     ExcludeFromWordChoice:boolean;
 }
-export interface UnknownWord extends UnitWord {
+export type UnknownWord = UnitWord & {
     Exists:false;
     ExcludeFromWordChoice:true;
 }
-export interface WordReference extends UnitWord {
+export type WordReference = UnitWord & {
     WordId:string;
     Exists:true;
 }
@@ -56,7 +60,7 @@ export interface BaseWord extends UnitWord {
     IsParasitic:boolean;
     Visible:boolean;
     Indexable:boolean;
-    Connotation?:Array<string|WordReference>;
+    Connotation?:Words;
 
     UniqueId:string;
     POS:keyof PartOfSpeech;
@@ -65,15 +69,15 @@ export interface BaseWord extends UnitWord {
     IPA:Array<Grapheme>;
     Gender:Gender;
     Meaning:GenericDefinition;
-    Thesaurus:string; //TODO
+    Thesaurus:Thesaurus;
     Tenses?:TenseContainer;
     CurrentTense?:TenseType;
     PersonPerspective:PersonPerspective;
-    Euphemisms:Array<string|WordReference>;
+    Euphemisms:Words;
     Cases?:CaseStructure;
     CurrentCase?:keyof CaseStructure;
-    Contexts:Array<string|WordReference>;
-    Category:string;
+    Contexts:Words;
+    Category:string[];
 }
 export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsRecordComplete: boolean;
@@ -97,22 +101,23 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsShortened: boolean;
     IsConjugatable: boolean;
     Meaning: GenericDefinition;
-    Thesaurus: string; //TODO
+    Thesaurus: Thesaurus; //TODO
     Tenses?: TenseContainer;
     CurrentTense?:TenseType;
     PersonPerspective: PersonPerspective;
-    Euphemisms: Array<string|WordReference>;
+    Euphemisms: Words;
     Cases?: CaseStructure;
     CurrentCase?: keyof CaseStructure;
     IsArchaic: boolean;
     IsNeologism: boolean;
-    Contexts: Array<string|WordReference>;
-    Category: string;
+    Contexts: Words;
+    Category: string[];
     IsParasitic: boolean;
     Visible: boolean;
     Indexable: boolean;
     ExcludeFromWordChoice: boolean;
     constructor(pos:T, options:OptionsByPartOfSpeech[keyof OptionsByPartOfSpeech]){
+        if(!options.word || options.word === "") throw "Eh, did you forget something?";
         this.IsRecordComplete = false;
         this.Exists = true;
         this.UniqueId = crypto.randomUUID();
@@ -141,7 +146,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
             createdat:Date.now(),
             lastmodified:Date.now(),
         });
-        this.Thesaurus = ""; //TODO
+        this.Thesaurus = {}; //TODO
         this.Tenses = (pos === "Verb" || pos === "Participle") ? Tense.BuildAll(this.Name):undefined;
         this.CurrentTense = "Present Simple";
         this.PersonPerspective = options.personperspective||0;
@@ -151,14 +156,14 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.IsArchaic = options.isarchaic||false;
         this.IsNeologism = options.isneologism||false;
         this.Contexts = [""];
-        this.Category = options.category||"Uncategorised";
+        this.Category = [options.category||"Uncategorised"];
         this.ExcludeFromWordChoice = options.excludefromwordchoices||false;
         this.IsParasitic = options.isparasitic||false;
         this.Visible = false;
         this.Indexable = false;
         this.HasBias = false;
     }
-    Connotation?: Array<string|WordReference>;
+    Connotation?: Words;
     static Create<K extends keyof PartOfSpeech>(pos:K, options:OptionsByPartOfSpeech[K]):PartOfSpeech[K] {
         const Constructors:PartOfSpeech = {
             "Adjective":new Adjective("Adjective", options),
@@ -177,6 +182,15 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
             "Unknown":new Word("Unknown", options),
         }
         return Constructors[pos];
+    }
+    ToWordReference():WordReference {
+        let wr:WordReference = {
+            Name:this.Name,
+            Exists:true,
+            ExcludeFromWordChoice:(this.IsProfane||this.IsDerogatory||this.IsOffensive||this.HasBias),
+            WordId:this.UniqueId,
+        }
+        return wr;
     }
 }
 export class Interjection extends Word<"Interjection"> {}
@@ -296,7 +310,7 @@ export class Preposition extends Word<"Preposition"> {
     }
 }
 export class Propernoun extends Word<"Propernoun"> {
-    Kind!:string;
+    Kind:string;
     constructor(pos:"Propernoun", options:PropernounOptions){
         super(pos, options);
         this.Kind = options.kind||"";
