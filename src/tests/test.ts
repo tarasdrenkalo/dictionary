@@ -1,4 +1,8 @@
-import { Word } from "../domain/structure.js";
-import { WordMapping } from "../persistance/db/mappings.js";
+import { English } from "../domain/utils/language.js";
+import { DictionaryDBLookup } from "../persistance/db/lookup.js";
 
-await WordMapping.Insert(Word.Create("Noun", {word:"fare", meaning:"Test", category:""}));
+console.log(DictionaryDBLookup.BuldQuery("test", {
+    categories:["Test"],
+    uid:"123",
+    language:English,
+}));

@@ -24,7 +24,8 @@ export interface DBLexemeCollection {
     IsConjugatable:boolean,
     Tenses?:TenseContainer,
     Cases?:CaseStructure,
-    Thesaurus?:Thesaurus
+    Thesaurus?:Thesaurus,
+    Categories?:string[]
 }
 export interface DBModCollection {
     WordId:string,
@@ -53,7 +54,7 @@ export class WordMapping {
         if (w.IsParasitic) flags.push("Parasitic");
         if (!w.IsRecordComplete)
             flags.push("Incomplete");
-        if (!w.Category || w.Category.includes("") || w.Category.length === 0)
+        if (!w.Categories || w.Categories.includes("") || w.Categories.length === 0)
             flags.push("Uncategorised");
         if (w.Visible)
             seo.push("Visible");
@@ -77,7 +78,8 @@ export class WordMapping {
                 IsConjugatable: w.IsConjugatable,
                 Tenses: w.Tenses,
                 Cases: w.Cases,
-                Thesaurus: w.Thesaurus
+                Thesaurus: w.Thesaurus,
+                Categories:w.Categories
             },
             Editorial: {
                 WordId: w.UniqueId,

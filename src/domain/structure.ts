@@ -77,7 +77,7 @@ export interface BaseWord extends UnitWord {
     Cases?:CaseStructure;
     CurrentCase?:keyof CaseStructure;
     Contexts:Words;
-    Category:string[];
+    Categories:string[];
 }
 export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsRecordComplete: boolean;
@@ -111,7 +111,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsArchaic: boolean;
     IsNeologism: boolean;
     Contexts: Words;
-    Category: string[];
+    Categories: string[];
     IsParasitic: boolean;
     Visible: boolean;
     Indexable: boolean;
@@ -156,7 +156,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.IsArchaic = options.isarchaic||false;
         this.IsNeologism = options.isneologism||false;
         this.Contexts = [""];
-        this.Category = [options.category||"Uncategorised"];
+        this.Categories = [options.category||"Uncategorised"];
         this.ExcludeFromWordChoice = options.excludefromwordchoices||false;
         this.IsParasitic = options.isparasitic||false;
         this.Visible = false;
