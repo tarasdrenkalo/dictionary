@@ -15,4 +15,5 @@ Thank you for viewing this art! Development is in process, check back later!
 ## Usage (Draft, not final)
 - Create Codespace
 - Run `npm run setup` to install all necessary packages
+- Run `npm run build` to compile typescript into node.js
 - Then you can test examples of usage (just run `npm run example` and see of outputs) (more examples coming soon)!
