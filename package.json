@@ -4,7 +4,8 @@
   "description": "Test",
   "scripts": {
     "build": "tsc",
-    "start": "node ./build/tests/test.js"
+    "setup": "npm install node typescript",
+    "example": "node ./build/tests/test.js"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",
@@ -13,6 +14,6 @@
   "type": "module",
   "dependencies": {
     "mongodb": "^7.1.0",
-    "node": "^25.6.1"
+    "node": "^25.8.0"
   }
 }
