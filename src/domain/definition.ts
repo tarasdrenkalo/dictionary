@@ -7,7 +7,6 @@ export interface VersionedDefinition {
 }
 export interface GenericDefinition {
     UniqueID:string;
-    Category:string;
     Versions:Array<VersionedDefinition>|null;
     Current:VersionedDefinition;
     IsLocked:boolean;
@@ -22,7 +21,6 @@ export interface DefinitionConstructiorOptions {
     versioning:number;
     content:string|HTMLElement;
     sources:Array<string>|null;
-    category:string;
     creator:string;
     createdat:number|null;
     lastmodified:number|null;
@@ -30,8 +28,7 @@ export interface DefinitionConstructiorOptions {
 export class Definition implements GenericDefinition {
     UniqueID: string;
     IsApproved: boolean;
-    Category: string;
-    Versions!: VersionedDefinition[];
+    Versions: VersionedDefinition[];
     Current: VersionedDefinition;
     IsLocked: boolean;
     IsVisible: boolean;
@@ -42,7 +39,6 @@ export class Definition implements GenericDefinition {
     constructor(options:DefinitionConstructiorOptions) {
         this.IsApproved = false;
         this.UniqueID = crypto.randomUUID();
-        this.Category = options.category;
         const current:VersionedDefinition = {
             Content: options.content,
             UniqueID:crypto.randomUUID(),

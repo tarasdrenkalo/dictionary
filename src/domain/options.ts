@@ -27,7 +27,7 @@ export type WordOptions = {
     isarchaic?: boolean;
     isneologism?: boolean;
     contexts?: Array<WordReference|string>;
-    category:string;
+    category?:string;
     isparasitic?:boolean;
     sources?:Array<string>;
     language?:Language;

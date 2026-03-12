@@ -25,7 +25,7 @@ export interface DBLexemeCollection {
     Tenses?:TenseContainer,
     Cases?:CaseStructure,
     Thesaurus?:Thesaurus,
-    Categories?:string[]
+    Category?:string
 }
 export interface DBModCollection {
     WordId:string,
@@ -39,29 +39,29 @@ export interface StorableCollection {
 
 export class WordMapping {
     static Pack(w: Word<keyof PartOfSpeech>): StorableCollection {
-        const flags:Array<DBModFlags> = [];
-        const seo:Array<DBSEOFlags> = [];
-        if(w.POS === "Unknown") flags.push("UnknownPartOfSpeech");
-        if (w.HasBias) flags.push("Bias");
-        if (w.IsColloquial) flags.push("Colloqualism");
-        if (!w.IsUsedFormally) flags.push("InformalOnly");
-        if (!w.IsUsedCasually) flags.push("FormalOnly");
-        if (w.IsProfane) flags.push("Profane");
-        if (w.IsDerogatory) flags.push("Derogatory");
-        if (w.IsOffensive) flags.push("Offensive");
-        if (w.IsArchaic) flags.push("Archaic");
-        if (w.IsNeologism) flags.push("Neologism");
-        if (w.IsParasitic) flags.push("Parasitic");
+        const flags:Set<DBModFlags> = new Set();
+        const seo:Set<DBSEOFlags> = new Set();
+        if(w.POS === "Unknown") flags.add("UnknownPartOfSpeech").add("Incomplete");
+        if (w.HasBias) flags.add("Bias");
+        if (w.IsColloquial) flags.add("Colloqualism");
+        if (!w.IsUsedFormally) flags.add("InformalOnly");
+        if (!w.IsUsedCasually) flags.add("FormalOnly");
+        if (w.IsProfane) flags.add("Profane");
+        if (w.IsDerogatory) flags.add("Derogatory");
+        if (w.IsOffensive) flags.add("Offensive");
+        if (w.IsArchaic) flags.add("Archaic");
+        if (w.IsNeologism) flags.add("Neologism");
+        if (w.IsParasitic) flags.add("Parasitic");
         if (!w.IsRecordComplete)
-            flags.push("Incomplete");
-        if (!w.Categories || w.Categories.includes("") || w.Categories.length === 0)
-            flags.push("Uncategorised");
+            flags.add("Incomplete");
+        if (w.Category === "Uncategorised")
+            flags.add("Uncategorised");
         if (w.Visible)
-            seo.push("Visible");
+            seo.add("Visible");
         if (w.Indexable)
-            seo.push("Indexable");
+            seo.add("Indexable");
         if (w.Visible && w.Indexable)
-            seo.push("SEOIndexable");
+            seo.add("SEOIndexable");
         return {
             Lexeme: {
                 UniqueId: w.UniqueId,
@@ -79,17 +79,17 @@ export class WordMapping {
                 Tenses: w.Tenses,
                 Cases: w.Cases,
                 Thesaurus: w.Thesaurus,
-                Categories:w.Categories
+                Category:w.Category
             },
             Editorial: {
                 WordId: w.UniqueId,
-                Flags: flags,
-                SEO: seo
+                Flags: flags.values().toArray(),
+                SEO: seo.values().toArray()
             }
         };
     }
     static *PackMany(f:"E"|"L",...w:Word<keyof PartOfSpeech>[]){
-        const iter = w.map((e)=>WordMapping.Pack(e));
+        const iter = w.map(WordMapping.Pack);
         for(let i of iter){
             yield f==="E"? i.Editorial : i.Lexeme;
         }
@@ -102,6 +102,6 @@ export class WordMapping {
         await mdblexcoll.insertMany(WordMapping.PackMany("L", ...entries).toArray());
         await mdbmodcoll.insertMany(WordMapping.PackMany("E", ...entries).toArray());
         await mdbclient.close();
-        console.log("Done!");
+        console.log(`Successfully inserted into database`);
     }
 }

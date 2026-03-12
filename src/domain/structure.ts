@@ -61,7 +61,6 @@ export interface BaseWord extends UnitWord {
     Visible:boolean;
     Indexable:boolean;
     Connotation?:Words;
-
     UniqueId:string;
     POS:keyof PartOfSpeech;
     Language:Language;
@@ -77,7 +76,7 @@ export interface BaseWord extends UnitWord {
     Cases?:CaseStructure;
     CurrentCase?:keyof CaseStructure;
     Contexts:Words;
-    Categories:string[];
+    Category:string;
 }
 export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsRecordComplete: boolean;
@@ -111,7 +110,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsArchaic: boolean;
     IsNeologism: boolean;
     Contexts: Words;
-    Categories: string[];
+    Category: string;
     IsParasitic: boolean;
     Visible: boolean;
     Indexable: boolean;
@@ -141,7 +140,6 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
             versioning:1,
             content:options.meaning,
             sources:options.sources||[],
-            category:options.category,
             creator:"Test",
             createdat:Date.now(),
             lastmodified:Date.now(),
@@ -150,13 +148,13 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.Tenses = (pos === "Verb" || pos === "Participle") ? Tense.BuildAll(this.Name):undefined;
         this.CurrentTense = "Present Simple";
         this.PersonPerspective = options.personperspective||0;
-        this.Cases = (pos === "Noun") ? Cases.All(this.Name, English) : undefined;
+        this.Cases = (pos === "Noun"||pos === "Adjective") ? Cases.All(this.Name, English) : undefined;
         this.Euphemisms = options.euphemisms||[];
         this.CurrentCase = undefined;
         this.IsArchaic = options.isarchaic||false;
         this.IsNeologism = options.isneologism||false;
         this.Contexts = [""];
-        this.Categories = [options.category||"Uncategorised"];
+        this.Category = options.category||"Uncategorised";
         this.ExcludeFromWordChoice = options.excludefromwordchoices||false;
         this.IsParasitic = options.isparasitic||false;
         this.Visible = false;
