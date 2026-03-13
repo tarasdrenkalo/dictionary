@@ -7,7 +7,7 @@ import { MorphemeStructure } from "../../domain/utils/morpheme.js";
 import { TenseContainer } from "../../domain/tense.js";
 import { CaseStructure } from "../../domain/cases.js";
 import { Thesaurus } from "../../domain/thesaurus.js";
-import { Words, Word, PartOfSpeech } from "../../domain/structure.js";
+import { Words, Word, PartOfSpeech, Adjective, Participle, Adverb, Conjunction, Determiner, Preposition, Pronoun, Propernoun, Noun, Verb } from "../../domain/structure.js";
 
 export type DictionaryDBLexemeQuery = {
     uid?:string;
@@ -120,6 +120,25 @@ export class DictionaryDBLookup {
             w.IsRecordComplete = !flags.includes("Incomplete");
             w.Visible = seoflags.includes("Visible");
             w.Indexable = seoflags.includes("Indexable");
+            w.PersonPerspective = lex.PersonPerspective;
+            if(w instanceof Adjective || w instanceof Participle) {
+                w.Comparative = lex.Comparative;
+                w.Superlative = lex.Superlative;
+            }
+            const needskind = w instanceof Adverb || w instanceof Determiner ||
+                    w instanceof Conjunction || w instanceof Pronoun || w instanceof Preposition || w instanceof Propernoun;
+            if(needskind) w.Kind = lex.Kind;
+            if(w instanceof Noun) {
+                w.IsSingular = flags.includes("Singular");
+                w.IsPlural = flags.includes("Plural");
+                w.IsSingularOnly = !flags.includes("SingularOnly");
+                w.IsPluralOnly = !flags.includes("PluralOnly");
+                w.IsCountable = !flags.includes("Uncountable");
+            }
+            if(w instanceof Verb || w instanceof Participle) {
+                w.IsTransitive = flags.includes("Transitive");
+                w.IsActive = flags.includes("Active");
+            }
             words.push(w);
         }
         return words;

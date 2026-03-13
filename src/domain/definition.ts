@@ -66,7 +66,9 @@ export class Definition implements GenericDefinition {
             UniqueID: crypto.randomUUID(),
         }
         this.Versions.push(current);
+        this.Current = current;
         this.Contributors.add(by);
+        return this;
     }
     Delete(version:number|string) {
         let target:VersionedDefinition|undefined;
@@ -85,6 +87,7 @@ export class Definition implements GenericDefinition {
             default:
                 throw "Unable to perform Operation!";
         }
+        return this;
     }
     Lock = ()=>{
         this.IsLocked = true;

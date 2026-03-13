@@ -1,14 +1,15 @@
 import { GenericDefinition } from "../../domain/definition.js";
 import { MorphemeStructure } from "../../domain/utils/morpheme.js";
-import { PartOfSpeech, Word, Words } from "../../domain/structure.js";
+import { Adjective, Adverb, Conjunction, Determiner, Noun, Participle, PartOfSpeech, Preposition, Pronoun, Propernoun, Verb, Word, Words } from "../../domain/structure.js";
 import { Grapheme } from "../../domain/utils/grapheme.js";
-import { Gender } from "../../domain/variants.js";
+import { Gender, VariantByPartOfSpeech } from "../../domain/variants.js";
 import { TenseContainer } from "../../domain/tense.js";
 import { CaseStructure } from "../../domain/cases.js";
 import { Thesaurus } from "../../domain/thesaurus.js";
 import { DBModFlags, DBSEOFlags } from "./flags.js";
 import { Language } from "../../domain/utils/language.js";
 import { MongoClient } from "mongodb";
+import { PersonPerspective } from "../../domain/options.js";
 export interface DBLexemeCollection {
     UniqueId:string,
     Name:string,
@@ -25,7 +26,11 @@ export interface DBLexemeCollection {
     Tenses?:TenseContainer,
     Cases?:CaseStructure,
     Thesaurus?:Thesaurus,
-    Category?:string
+    Category?:string,
+    Kind?:string,
+    Comparative?:string,
+    Superlative?:string,
+    PersonPerspective:PersonPerspective;
 }
 export interface DBModCollection {
     WordId:string,
@@ -62,10 +67,24 @@ export class WordMapping {
             seo.add("Indexable");
         if (w.Visible && w.Indexable)
             seo.add("SEOIndexable");
+        if(w instanceof Verb || w instanceof Participle) {
+            if(w.IsTransitive) flags.add("Transitive");
+            if(w.IsActive) flags.add("Active");
+        }
+        if(w instanceof Noun){
+            if(w.IsSingular) flags.add("Singular")
+            if(w.IsPlural) flags.add("Plural");
+            if(w.IsSingularOnly) flags.add("SingularOnly");
+            if(w.IsPlural) flags.add("PluralOnly");
+            if(!w.IsCountable) flags.add("Uncountable");
+        }
+        const needskind = w instanceof Adverb || w instanceof Determiner ||
+        w instanceof Conjunction || w instanceof Pronoun || w instanceof Preposition || w instanceof Propernoun;
         return {
             Lexeme: {
                 UniqueId: w.UniqueId,
                 Name: w.Name,
+                PersonPerspective:w.PersonPerspective,
                 POS: w.POS,
                 Language: w.Language,
                 Meaning: w.Meaning,
@@ -79,7 +98,10 @@ export class WordMapping {
                 Tenses: w.Tenses,
                 Cases: w.Cases,
                 Thesaurus: w.Thesaurus,
-                Category:w.Category
+                Category:w.Category,
+                Comparative: w instanceof Adjective || w instanceof Participle ? w.Comparative:undefined,
+                Superlative: w instanceof Adjective || w instanceof Participle ? w.Superlative:undefined,
+                Kind:needskind ? w.Kind: undefined,
             },
             Editorial: {
                 WordId: w.UniqueId,

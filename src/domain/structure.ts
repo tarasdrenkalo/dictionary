@@ -66,7 +66,7 @@ export interface BaseWord extends UnitWord {
     Morpheme:MorphemeStructure;
     IPA:Array<Grapheme>;
     Gender:Gender;
-    Meaning:GenericDefinition;
+    Meaning:Definition;
     Thesaurus:Thesaurus;
     Tenses?:TenseContainer;
     CurrentTense?:TenseType;
@@ -98,7 +98,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsOffensive: boolean;
     IsShortened: boolean;
     IsConjugatable: boolean;
-    Meaning: GenericDefinition;
+    Meaning: Definition;
     Thesaurus: Thesaurus; //TODO
     Tenses?: TenseContainer;
     CurrentTense?:TenseType;
@@ -222,7 +222,7 @@ export class Adjective extends Word<"Adjective"> {
 export class Adverb extends Word<"Adverb">{
     Kind?:AdverbVariant;
     constructor(pos:"Adverb",options:AdverbOptions) {
-        super("Adverb", options);
+        super(pos, options);
         this.Kind = options.kind;
     }
 }

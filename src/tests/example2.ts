@@ -8,7 +8,10 @@ const w = Word.Create("Noun", {
 const w2 = Word.Create("Verb", {
     meaning: "Test entry",
     word: "test",
-});
+})
+w2.Meaning.Edit("Secod defintion version", "Test", []);
 await WordMapping.Insert(w, w2);
 let e = await DictionaryDBLookup.Lookup(w.Name, {uid:w.UniqueId});
-console.log(e);
+for(let f of e){
+    console.log(f instanceof Word ? f.Meaning.Versions: "");
+}
