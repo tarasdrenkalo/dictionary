@@ -1,8 +1,8 @@
 import { GenericDefinition } from "../../domain/definition.js";
 import { MorphemeStructure } from "../../domain/utils/morpheme.js";
-import { Adjective, Adverb, Conjunction, Determiner, Noun, Participle, PartOfSpeech, Preposition, Pronoun, Propernoun, Verb, Word, Words } from "../../domain/structure.js";
+import { Adjective, Adverb, Conjunction, Determiner, Noun, Participle, PartOfSpeech, Preposition, Pronoun, Propernoun, Verb, Word, WordReference } from "../../domain/structure.js";
 import { Grapheme } from "../../domain/utils/grapheme.js";
-import { Gender, VariantByPartOfSpeech } from "../../domain/variants.js";
+import { Gender } from "../../domain/variants.js";
 import { TenseContainer } from "../../domain/tense.js";
 import { CaseStructure } from "../../domain/cases.js";
 import { Thesaurus } from "../../domain/thesaurus.js";
@@ -13,6 +13,7 @@ import { PersonPerspective } from "../../domain/options.js";
 export interface DBLexemeCollection {
     UniqueId:string,
     Name:string,
+    DerivativeOf:WordReference,
     POS:keyof PartOfSpeech,
     Language:Language,
     Meaning:GenericDefinition,
@@ -25,6 +26,7 @@ export interface DBLexemeCollection {
     IsConjugatable:boolean,
     Tenses?:TenseContainer,
     Cases?:CaseStructure,
+    CurrentCase?:keyof CaseStructure;
     Thesaurus?:Thesaurus,
     Category?:string,
     Kind?:string,
@@ -80,12 +82,14 @@ export class WordMapping {
         }
         const needskind = w instanceof Adverb || w instanceof Determiner ||
         w instanceof Conjunction || w instanceof Pronoun || w instanceof Preposition || w instanceof Propernoun;
+        const needscases = (w.POS === "Adjective" || w.POS === "Noun" || w.POS === "Pronoun" || w.POS === "Participle");
         return {
             Lexeme: {
                 UniqueId: w.UniqueId,
                 Name: w.Name,
                 PersonPerspective:w.PersonPerspective,
                 POS: w.POS,
+                DerivativeOf:w.DerivativeOf,
                 Language: w.Language,
                 Meaning: w.Meaning,
                 IPA: w.IPA,
@@ -96,11 +100,12 @@ export class WordMapping {
                 IsShortened: w.IsShortened,
                 IsConjugatable: w.IsConjugatable,
                 Tenses: w.Tenses,
-                Cases: w.Cases,
+                Cases: needscases ? w.Cases:undefined,
+                CurrentCase: needscases ? w.CurrentCase : undefined,
                 Thesaurus: w.Thesaurus,
                 Category:w.Category,
-                Comparative: w instanceof Adjective || w instanceof Participle ? w.Comparative:undefined,
-                Superlative: w instanceof Adjective || w instanceof Participle ? w.Superlative:undefined,
+                Comparative: w instanceof Adjective || w instanceof Participle ? w.Comparative:Adjective.CS(w.Name, true),
+                Superlative: w instanceof Adjective || w instanceof Participle ? w.Superlative:Adjective.CS(w.Name, false),
                 Kind:needskind ? w.Kind: undefined,
             },
             Editorial: {
@@ -118,7 +123,7 @@ export class WordMapping {
     }
 
     static async Insert(...entries:Word<keyof PartOfSpeech>[]){
-        const mdbclient  = new MongoClient("mongodb://localhost:27017/");
+        const mdbclient  = new MongoClient(`mongodb://${process.env.MONGODB_HOST||"localhost"}:${process.env.MONGODB_PORT||"27017"}/`);
         const mdblexcoll = mdbclient.db("Dictionary").collection("Words");
         const mdbmodcoll = mdbclient.db("Dictionary").collection("Metadata");
         await mdblexcoll.insertMany(WordMapping.PackMany("L", ...entries).toArray());

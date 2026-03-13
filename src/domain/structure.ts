@@ -1,5 +1,5 @@
 import { CaseStructure, Cases } from "./cases.js";
-import { GenericDefinition, Definition } from "./definition.js";
+import { Definition } from "./definition.js";
 import { PersonPerspective, OptionsByPartOfSpeech, AdverbOptions, ConjunctionOptions, DeterminerOptions, PrepositionOptions, PronounOptions, WordOptions, NounOptions, VerbOptions, PropernounOptions } from "./options.js";
 import { TenseContainer, TenseType, Tense } from "./tense.js";
 import { Thesaurus } from "./thesaurus.js";
@@ -43,6 +43,7 @@ export type WordReference = UnitWord & {
 export interface BaseWord extends UnitWord {
     Exists:true;
     IsRecordComplete:boolean;
+    DerivativeOf:WordReference;
     HasBias:boolean;
     IsPropernoun:boolean;
     IsAbbreviation:boolean;
@@ -83,6 +84,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     Exists: true;
     UniqueId: string;
     Name: string;
+    DerivativeOf: WordReference;
     POS:T;
     Language: Language;
     Morpheme: MorphemeStructure;
@@ -149,7 +151,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.PersonPerspective = options.personperspective||0;
         this.Cases = (pos === "Noun"||pos === "Adjective") ? Cases.All(this.Name, English) : undefined;
         this.Euphemisms = options.euphemisms||[];
-        this.CurrentCase = undefined;
+        this.CurrentCase = options.case||"Nominative";
         this.IsArchaic = options.isarchaic||false;
         this.IsNeologism = options.isneologism||false;
         this.Contexts = [];
@@ -158,7 +160,14 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.IsParasitic = options.isparasitic||false;
         this.Visible = false;
         this.Indexable = false;
-        this.HasBias = false;
+        this.HasBias = options.isbiased || false;
+        this.DerivativeOf = options.derive || {
+            Exists:true,
+            Name:this.Name,
+            ExcludeFromWordChoice:this.ExcludeFromWordChoice,
+            WordId:this.UniqueId
+
+        };
     }
     Connotation?: Words;
     static Create<K extends keyof PartOfSpeech>(pos:K, options:OptionsByPartOfSpeech[K]):PartOfSpeech[K] {

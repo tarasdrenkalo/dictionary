@@ -3,10 +3,10 @@ export interface VersionedDefinition {
     Creator:string|null;
     Content:string|HTMLElement;
     Sources:Array<string>|null;
-    UniqueID:string;
+    id:string;
 }
 export interface GenericDefinition {
-    UniqueID:string;
+    id:string;
     Versions:Array<VersionedDefinition>|null;
     Current:VersionedDefinition;
     IsLocked:boolean;
@@ -26,7 +26,7 @@ export interface DefinitionConstructiorOptions {
     lastmodified:number|null;
 }
 export class Definition implements GenericDefinition {
-    UniqueID: string;
+    id: string;
     IsApproved: boolean;
     Versions: VersionedDefinition[];
     Current: VersionedDefinition;
@@ -38,10 +38,10 @@ export class Definition implements GenericDefinition {
     Contributors: Set<string>;
     constructor(options:DefinitionConstructiorOptions) {
         this.IsApproved = false;
-        this.UniqueID = crypto.randomUUID();
+        this.id = crypto.randomUUID();
         const current:VersionedDefinition = {
             Content: options.content,
-            UniqueID:crypto.randomUUID(),
+            id:crypto.randomUUID(),
             Creator: options.creator,
             Sources: options.sources,
             VersionNumber: options.versioning,
@@ -63,7 +63,7 @@ export class Definition implements GenericDefinition {
             Creator: by,
             VersionNumber: (this.Versions?.length || 0) + 1,
             Sources: sources,
-            UniqueID: crypto.randomUUID(),
+            id: crypto.randomUUID(),
         }
         this.Versions.push(current);
         this.Current = current;
@@ -74,10 +74,10 @@ export class Definition implements GenericDefinition {
         let target:VersionedDefinition|undefined;
         switch(typeof version) {
             case "string":
-                target = this.Versions?.filter((vd)=>vd.UniqueID == version)[0];
+                target = this.Versions?.filter((vd)=>vd.id == version)[0];
                 if(typeof target === undefined) throw "Version not found!";
                 if(target === this.Current) throw "Can not remove current!";
-                this.Versions = this.Versions.filter((vd)=>vd.UniqueID != version);
+                this.Versions = this.Versions.filter((vd)=>vd.id != version);
                 break;
             case "number":
                 target = this.Versions?.filter((vd)=>vd.VersionNumber == version)[0];
@@ -105,5 +105,18 @@ export class Definition implements GenericDefinition {
         this.IsVisible = false;
         return this;
     }
-    ToJSON = ()=>JSON.parse(JSON.stringify(this));
+    ToJSON(): GenericDefinition {
+        return {
+            id: this.id,
+            Versions: this.Versions,
+            Current: this.Current,
+            IsLocked: this.IsLocked,
+            IsApproved: this.IsLocked,
+            IsVisible: this.IsVisible,
+            IsDeleted: this.IsDeleted,
+            CreatedAt: this.CreatedAt,
+            LastModifiedAt: this.LastModifiedAt,
+            Contributors: this.Contributors
+        };
+    };
 }

@@ -5,6 +5,7 @@ import { Language } from "./utils/language.js";
 import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
 export type PersonPerspective = 0|1|2|3;
 export type WordOptions = {
+    case?:keyof CaseStructure;
     isbiased?:boolean;
     connotation?:string;
     excludefromwordchoices?:boolean;

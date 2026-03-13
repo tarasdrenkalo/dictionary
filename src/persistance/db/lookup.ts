@@ -38,7 +38,7 @@ export type DictionaryDBAggregate = {
 export type DictionaryDBQuery = DictionaryDBLexemeQuery & DictionaryDBModQuery;
 export class DictionaryDBLookup {
 
-    private static client = new MongoClient("mongodb://localhost:27017/");
+    private static client = new MongoClient(`mongodb://${process.env.MONGODB_HOST||"localhost"}:${process.env.MONGODB_PORT||"27017"}/`);
     private static db = DictionaryDBLookup.client.db("Dictionary");
 
     private static WordsCollection = DictionaryDBLookup.db.collection("Words");
@@ -90,6 +90,7 @@ export class DictionaryDBLookup {
             w.POS = lex.POS as keyof PartOfSpeech;
             w.Language = English;
             w.IPA = lex.IPA as Grapheme[];
+            w.DerivativeOf = lex.DerivativeOf || {Exists:true, Name:w.Name, ExcludeFromWordChoice:w.ExcludeFromWordChoice, WordId:w.UniqueId}
             w.Gender = lex.Gender as Gender;
             w.Morpheme = lex.Morpheme as MorphemeStructure;
             w.IsPropernoun = w.POS === "Propernoun";
@@ -100,6 +101,7 @@ export class DictionaryDBLookup {
             w.Cases = lex.Cases as CaseStructure || undefined;
             w.Thesaurus = lex.Thesaurus as Thesaurus;
             w.Category = lex.Category;
+            w.CurrentCase = lex.CurrentCase as keyof CaseStructure || undefined;
             const flags: DBModFlags[] = editorial?.Flags ?? [];
             const seoflags: DBSEOFlags[] = editorial?.SEO ?? [];
             w.HasBias = flags.includes("Bias");
