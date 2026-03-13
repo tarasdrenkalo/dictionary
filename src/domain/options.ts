@@ -23,7 +23,7 @@ export type WordOptions = {
     isoffensive?: boolean;
     isshortened?: boolean;
     isconjugatable?: boolean;
-    euphemisms?: Array<WordReference|string>;
+    euphemisms?: Array<WordReference>;
     isarchaic?: boolean;
     isneologism?: boolean;
     contexts?: Array<WordReference|string>;

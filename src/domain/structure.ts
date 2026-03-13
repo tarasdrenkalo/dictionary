@@ -9,8 +9,7 @@ import { MorphemeStructure, Morpheme } from "./utils/morpheme.js";
 import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
 
 
-export type Words = Set<Word<keyof PartOfSpeech>|WordReference|string>|Array<Word<keyof PartOfSpeech>|WordReference|string>;
-
+export type Words = Set<Word<keyof PartOfSpeech>|WordReference>|Array<Word<keyof PartOfSpeech>|WordReference>;
 export interface PartOfSpeech {
     "Adjective":Adjective;
     "Adverb":Adverb;
@@ -153,7 +152,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.CurrentCase = undefined;
         this.IsArchaic = options.isarchaic||false;
         this.IsNeologism = options.isneologism||false;
-        this.Contexts = [""];
+        this.Contexts = [];
         this.Category = options.category||"Uncategorised";
         this.ExcludeFromWordChoice = options.excludefromwordchoices||false;
         this.IsParasitic = options.isparasitic||false;

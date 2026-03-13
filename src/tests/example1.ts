@@ -1,4 +1,4 @@
-import { Word } from "../domain/structure.js";
+import { Noun, Word } from "../domain/structure.js";
 import { DictionaryDBLookup } from "../persistance/db/lookup.js";
 import { WordMapping } from "../persistance/db/mappings.js";
 const w = Word.Create("Noun", {
@@ -10,4 +10,5 @@ const w2 = Word.Create("Verb", {
     word: "test",
 });
 await WordMapping.Insert(w, w2);
-await DictionaryDBLookup.Lookup(w.Name, {uid:w.UniqueId});
+let e = await DictionaryDBLookup.Lookup(w.Name, {uid:w.UniqueId});
+console.log(e);

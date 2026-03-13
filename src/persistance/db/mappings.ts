@@ -43,7 +43,7 @@ export class WordMapping {
         const seo:Set<DBSEOFlags> = new Set();
         if(w.POS === "Unknown") flags.add("UnknownPartOfSpeech").add("Incomplete");
         if (w.HasBias) flags.add("Bias");
-        if (w.IsColloquial) flags.add("Colloqualism");
+        if (w.IsColloquial) flags.add("Colloquialism");
         if (!w.IsUsedFormally) flags.add("InformalOnly");
         if (!w.IsUsedCasually) flags.add("FormalOnly");
         if (w.IsProfane) flags.add("Profane");
