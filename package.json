@@ -5,8 +5,8 @@
   "scripts": {
     "build": "tsc",
     "setup": "npm install node typescript",
-    "example": "node ./build/tests/test.js",
-    "example1": "node ./build/tests/example1.js"
+    "example1": "node ./build/tests/example1.js",
+    "example2": "node ./build/tests/example2.js"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",
