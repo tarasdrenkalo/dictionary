@@ -3,11 +3,12 @@ import { English, Language } from "../../domain/utils/language.js";
 import { DBModFlags, DBSEOFlags } from "./flags.js";
 import { Grapheme } from "../../domain/utils/grapheme.js";
 import { Gender } from "../../domain/variants.js";
-import { MorphemeStructure } from "../../domain/utils/morpheme.js";
+import { Morpheme, MorphemeStructure } from "../../domain/utils/morpheme.js";
 import { TenseContainer } from "../../domain/tense.js";
 import { CaseStructure } from "../../domain/cases.js";
 import { Thesaurus } from "../../domain/thesaurus.js";
 import { Words, Word, PartOfSpeech, Adjective, Participle, Adverb, Conjunction, Determiner, Preposition, Pronoun, Propernoun, Noun, Verb } from "../../domain/structure.js";
+import { Definition } from "../../domain/definition.js";
 
 export type DictionaryDBLexemeQuery = {
     uid?:string;
@@ -33,6 +34,11 @@ export type DictionaryDBAggregate = {
             $in:Array<DBModFlags>
         };
         SEO?:Array<DBSEOFlags>;
+    },
+    IPA:{
+        Word?:string,
+        WordIds?:{$in:Array<string>},
+        IPA?:Grapheme[]
     }
 }
 export type DictionaryDBQuery = DictionaryDBLexemeQuery & DictionaryDBModQuery;
@@ -43,7 +49,7 @@ export class DictionaryDBLookup {
 
     private static WordsCollection = DictionaryDBLookup.db.collection("Words");
     private static MetadataCollection = DictionaryDBLookup.db.collection("Metadata");
-
+    private static IPACollection = DictionaryDBLookup.db.collection("IPA");
     static BuildQuery(word?: string, from: DictionaryDBQuery = {}) {
         const needsflags =
             from.needsattention ||
@@ -52,18 +58,21 @@ export class DictionaryDBLookup {
             from.includeuncategorised;
         const query: DictionaryDBAggregate = {
             Lexeme: {},
-            Editorial: {}
+            Editorial: {},
+            IPA: {}
         };
         if (needsflags) query.Editorial.Flags = { $in: [] };
         if (from.uid) {
             query.Lexeme.UniqueId = from.uid;
             query.Editorial.WordId = from.uid;
+            query.IPA.WordIds = { $in: [from.uid] };
         }
         if (from.language) {
             query.Lexeme.Language = from.language.Name;
         }
         if (word) {
             query.Lexeme.Name = word;
+            query.IPA.Word = word;
         }
         if (from.needsattention) query.Editorial.Flags?.$in.push("Incomplete");
         if (from.includebiased) query.Editorial.Flags?.$in.push("Bias");
@@ -75,9 +84,12 @@ export class DictionaryDBLookup {
         const query = DictionaryDBLookup.BuildQuery(word, options);
         const lexemes = await this.WordsCollection.find(query.Lexeme).toArray();
         if (lexemes.length === 0) return [];
-        // Fetch all metadata in one query
         const ids = lexemes.map(l => l.UniqueId as string);
         const Metadata = await this.MetadataCollection.find({ WordId: { $in: ids } }).toArray();
+        const IPAdata = await this.IPACollection.findOne({
+            Word: word,
+            WordIds: { $in: ids }
+        });
         const MetadataMap = new Map(Metadata.map(m => [m.WordId, m]));
         const words: Words = [];
         for (const lex of lexemes) {
@@ -89,9 +101,10 @@ export class DictionaryDBLookup {
             w.UniqueId = lex.UniqueId;
             w.POS = lex.POS as keyof PartOfSpeech;
             w.Language = English;
-            w.IPA = lex.IPA as Grapheme[];
-            w.DerivativeOf = lex.DerivativeOf || {Exists:true, Name:w.Name, ExcludeFromWordChoice:w.ExcludeFromWordChoice, WordId:w.UniqueId}
+            w.IPA = (IPAdata?.IPA as Grapheme[])??Morpheme.Generate(word);
+            w.DerivativeOf = lex.DerivativeOf ?? {Exists:true, Name:w.Name, ExcludeFromWordChoice:w.ExcludeFromWordChoice, WordId:w.UniqueId}
             w.Gender = lex.Gender as Gender;
+            w.Meaning = Definition.FromJSON(lex.Meaning);
             w.Morpheme = lex.Morpheme as MorphemeStructure;
             w.IsPropernoun = w.POS === "Propernoun";
             w.IsAbbreviation = lex.IsAbbreviation;
@@ -133,8 +146,8 @@ export class DictionaryDBLookup {
             if(w instanceof Noun) {
                 w.IsSingular = flags.includes("Singular");
                 w.IsPlural = flags.includes("Plural");
-                w.IsSingularOnly = !flags.includes("SingularOnly");
-                w.IsPluralOnly = !flags.includes("PluralOnly");
+                w.IsSingularOnly = flags.includes("SingularOnly");
+                w.IsPluralOnly = flags.includes("PluralOnly");
                 w.IsCountable = !flags.includes("Uncountable");
             }
             if(w instanceof Verb || w instanceof Participle) {

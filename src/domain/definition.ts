@@ -15,7 +15,7 @@ export interface GenericDefinition {
     IsDeleted: boolean;
     CreatedAt:number|null;
     LastModifiedAt:number|null;
-    Contributors:Set<string>;
+    Contributors:Array<string>;
 }
 export interface DefinitionConstructiorOptions {
     versioning:number;
@@ -35,19 +35,19 @@ export class Definition implements GenericDefinition {
     IsDeleted: boolean;
     CreatedAt: number|null;
     LastModifiedAt: number|null;
-    Contributors: Set<string>;
+    Contributors: Array<string>;
     constructor(options:DefinitionConstructiorOptions) {
         this.IsApproved = false;
         this.id = crypto.randomUUID();
         const current:VersionedDefinition = {
-            Content: options.content,
+            Content: options?.content,
             id:crypto.randomUUID(),
             Creator: options.creator,
             Sources: options.sources,
             VersionNumber: options.versioning,
         }
-        this.Contributors = new Set();
-        this.Contributors.add(options.creator);
+        this.Contributors = [];
+        this.Contributors.push(options.creator);
         this.Current = current;
         this.Versions = [];
         this.Versions.push(current);
@@ -61,27 +61,26 @@ export class Definition implements GenericDefinition {
         const current:VersionedDefinition = {
             Content: content,
             Creator: by,
-            VersionNumber: (this.Versions?.length || 0) + 1,
+            VersionNumber: Math.max(...this.Versions.map(v => v.VersionNumber), 0) + 1,
             Sources: sources,
             id: crypto.randomUUID(),
         }
         this.Versions.push(current);
         this.Current = current;
-        this.Contributors.add(by);
+        this.Contributors.push(by);
         return this;
     }
     Delete(version:number|string) {
         let target:VersionedDefinition|undefined;
+        if(typeof target === "undefined") throw "Version not found!";
         switch(typeof version) {
             case "string":
                 target = this.Versions?.filter((vd)=>vd.id == version)[0];
-                if(typeof target === undefined) throw "Version not found!";
                 if(target === this.Current) throw "Can not remove current!";
                 this.Versions = this.Versions.filter((vd)=>vd.id != version);
                 break;
             case "number":
                 target = this.Versions?.filter((vd)=>vd.VersionNumber == version)[0];
-                if(typeof target === undefined) throw "Version not found!";
                 this.Versions = this.Versions.filter((vd)=>vd.VersionNumber != version);
                 break;
             default:
@@ -111,12 +110,26 @@ export class Definition implements GenericDefinition {
             Versions: this.Versions,
             Current: this.Current,
             IsLocked: this.IsLocked,
-            IsApproved: this.IsLocked,
+            IsApproved: this.IsApproved,
             IsVisible: this.IsVisible,
             IsDeleted: this.IsDeleted,
             CreatedAt: this.CreatedAt,
             LastModifiedAt: this.LastModifiedAt,
             Contributors: this.Contributors
-        };
-    };
+        }
+    }
+    static FromJSON(def: GenericDefinition): Definition {
+        const d = Object.create(Definition.prototype) as Definition;
+        d.id = def.id;
+        d.IsApproved = def.IsApproved;
+        d.IsLocked = def.IsLocked;
+        d.IsVisible = def.IsVisible;
+        d.IsDeleted = def.IsDeleted;
+        d.CreatedAt = def.CreatedAt;
+        d.LastModifiedAt = def.LastModifiedAt;
+        d.Current = def.Current;
+        d.Versions = def.Versions ?? [];
+        d.Contributors = def.Contributors ?? [];
+        return d;
+    }
 }

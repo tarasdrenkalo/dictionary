@@ -17,7 +17,6 @@ export interface DBLexemeCollection {
     POS:keyof PartOfSpeech,
     Language:Language,
     Meaning:GenericDefinition,
-    IPA:Grapheme[],
     Morpheme:MorphemeStructure,
     Gender:Gender,
     IsPropernoun:boolean,
@@ -39,9 +38,15 @@ export interface DBModCollection {
     Flags:Array<DBModFlags>,
     SEO:Array<DBSEOFlags>;
 }
+export interface DBIPACollection {
+    Word:string;
+    WordIds:string[];
+    IPA?:Grapheme[],
+}
 export interface StorableCollection {
     Lexeme:DBLexemeCollection;
     Editorial:DBModCollection;
+    IPA:DBIPACollection;
 }
 
 export class WordMapping {
@@ -77,7 +82,7 @@ export class WordMapping {
             if(w.IsSingular) flags.add("Singular")
             if(w.IsPlural) flags.add("Plural");
             if(w.IsSingularOnly) flags.add("SingularOnly");
-            if(w.IsPlural) flags.add("PluralOnly");
+            if(w.IsPluralOnly) flags.add("PluralOnly");
             if(!w.IsCountable) flags.add("Uncountable");
         }
         const needskind = w instanceof Adverb || w instanceof Determiner ||
@@ -91,8 +96,7 @@ export class WordMapping {
                 POS: w.POS,
                 DerivativeOf:w.DerivativeOf,
                 Language: w.Language,
-                Meaning: w.Meaning,
-                IPA: w.IPA,
+                Meaning: w.Meaning.ToJSON(),
                 Morpheme: w.Morpheme,
                 Gender: w.Gender,
                 IsPropernoun: w.IsPropernoun,
@@ -110,25 +114,42 @@ export class WordMapping {
             },
             Editorial: {
                 WordId: w.UniqueId,
-                Flags: flags.values().toArray(),
-                SEO: seo.values().toArray()
+                Flags: [...flags],
+                SEO: [...seo]
+            },
+            IPA:{
+                Word: w.Name,
+                WordIds:[w.UniqueId],
+                IPA:w.IPA
             }
         };
     }
-    static *PackMany(f:"E"|"L",...w:Word<keyof PartOfSpeech>[]){
-        const iter = w.map(WordMapping.Pack);
-        for(let i of iter){
-            yield f==="E"? i.Editorial : i.Lexeme;
-        }
+    static PackMany(f:"E"|"L", ...w:Word<keyof PartOfSpeech>[]) {
+        return w.map(v => {
+            const p = WordMapping.Pack(v);
+            return f === "E" ? p.Editorial : p.Lexeme;
+        });
     }
 
     static async Insert(...entries:Word<keyof PartOfSpeech>[]){
-        const mdbclient  = new MongoClient(`mongodb://${process.env.MONGODB_HOST||"localhost"}:${process.env.MONGODB_PORT||"27017"}/`);
-        const mdblexcoll = mdbclient.db("Dictionary").collection("Words");
-        const mdbmodcoll = mdbclient.db("Dictionary").collection("Metadata");
-        await mdblexcoll.insertMany(WordMapping.PackMany("L", ...entries).toArray());
-        await mdbmodcoll.insertMany(WordMapping.PackMany("E", ...entries).toArray());
-        await mdbclient.close();
+        const mclient  = new MongoClient(`mongodb://${process.env.MONGODB_HOST||"localhost"}:${process.env.MONGODB_PORT||"27017"}/`);
+        await mclient.connect();
+        const ddb = mclient.db("Dictionary");
+        const lex = ddb.collection("Words");
+        const mod = ddb.collection("Metadata");
+        const ipa = ddb.collection("IPA");
+        const packed = entries.map(WordMapping.Pack);
+        await lex.insertMany(packed.map(p => p.Lexeme));
+        await mod.insertMany(packed.map(p => p.Editorial));
+
+        for (const p of packed) {
+            await ipa.findOneAndUpdate(
+                { Word: p.IPA.Word },
+                {$addToSet: { WordIds: p.Lexeme.UniqueId }},
+                { upsert: true }
+            );
+        }
+        await mclient.close();
         console.log(`Successfully inserted into database`);
     }
 }
