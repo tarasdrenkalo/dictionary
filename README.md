@@ -16,4 +16,12 @@ Thank you for viewing this art! Development is in process, check back later!
 - Create Codespace
 - Run `npm run setup` to install all necessary packages
 - Run `npm run build` to compile typescript into node.js
-- Then you can test examples of usage (ex `npm run example1` for one example, `npm run example2` to check how would database work) (more examples coming soon)!
+- Then you can test examples of usage:
+* `npm run test-buildquery`
+* `npm run test-dbtest`
+* `npm run test-dictionarylookup`
+Check for more later!
+## Secrets
+```typescript
+console.log("You're viewing highlighted code! Cool!");
+```

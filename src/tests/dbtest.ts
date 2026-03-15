@@ -1,4 +1,4 @@
-import { Noun, Word } from "../domain/structure.js";
+import { Word } from "../domain/structure.js";
 import { DictionaryDBLookup } from "../persistance/db/lookup.js";
 import { WordMapping } from "../persistance/db/mappings.js";
 const w = Word.Create("Noun", {

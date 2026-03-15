@@ -5,8 +5,9 @@
   "scripts": {
     "build": "tsc",
     "setup": "npm install node typescript",
-    "example1": "node ./build/tests/example1.js",
-    "example2": "node ./build/tests/example2.js"
+    "test-buildquery": "node ./build/tests/buildquery.js",
+    "test-dbtest": "node ./build/tests/dbtest.js",
+    "test-dictionarylookup": "node ./build/tests/dictionarylookup.js"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",
