@@ -5,7 +5,7 @@ import { DBCollections, InsertCollectionsToDB, DBWordsCollection, DBMorphemeColl
 import { Definition } from "../../domain/definition.js";
 
 export class DictionaryDB {
-    private static MDBClient = new MongoClient(`mongodb://${process.env.MONGODB_HOST||"localhost"}:${process.env.MONGODB_PORT||"27017"}/`);
+    public static MDBClient = new MongoClient(`mongodb://${process.env.MONGODB_HOST||"localhost"}:${process.env.MONGODB_PORT||"27017"}/`);
     private static MDBDictionary = this.MDBClient.db("Dictionary");
     private static MDBWordsColl = this.MDBDictionary.collection<DBWordsCollection>("Words");
     private static MDBEditColl = this.MDBDictionary.collection<DBEditorialCollection>("Editorial");
@@ -318,4 +318,82 @@ export class DictionaryDB {
         await this.MDBClient.close();
         return result;
     }
+    static async DeleteById(id: string) {
+        await this.MDBClient.connect();
+        await this.MDBWordsColl.deleteOne({ WordId: id });
+        await this.MDBDefColl.deleteOne({ WordId: id });
+        await this.MDBEditColl.deleteOne({ WordId: id });
+        await this.MDBLexColl.updateMany(
+            { WordIds: id },
+            { $pull: { WordIds: id } }
+        );
+        await this.MDBIPAColl.updateMany(
+            { WordIds: id },
+            { $pull: { WordIds: id } }
+        );
+        await this.MDBLexColl.deleteMany({ WordIds: { $size: 0 } });
+        await this.MDBIPAColl.deleteMany({ WordIds: { $size: 0 } });
+        await this.MDBClient.close();
+    }
+    static async DeleteManyById(ids: string[]) {
+        await this.MDBClient.connect();
+        await this.MDBWordsColl.deleteMany({
+            WordId: { $in: ids }
+        });
+        await this.MDBDefColl.deleteMany({
+            WordId: { $in: ids }
+        });
+        await this.MDBEditColl.deleteMany({
+            WordId: { $in: ids }
+        });
+        await this.MDBLexColl.updateMany(
+            { WordIds: { $in: ids } },
+            { $pull: { WordIds: { $in: ids } } }
+        );
+        await this.MDBIPAColl.updateMany(
+            { WordIds: { $in: ids } },
+            { $pull: { WordIds: { $in: ids } } }
+        );
+        await this.MDBLexColl.deleteMany({ WordIds: { $size: 0 } });
+        await this.MDBIPAColl.deleteMany({ WordIds: { $size: 0 } });
+        await this.MDBClient.close();
+    }
+    static async PurgeBrokenReferences() {
+        await this.MDBClient.connect();
+        const words = await this.MDBWordsColl
+            .find({}, { projection: { WordId: 1 } })
+            .toArray();
+        const validIds = new Set(words.map(w => w.WordId));
+        const lexemes = await this.MDBLexColl.find().toArray();
+        for (const l of lexemes) {
+            const filtered = l.WordIds.filter(id => validIds.has(id));
+            if (filtered.length === 0) {
+                await this.MDBLexColl.deleteOne({ _id: l._id });
+            } else if (filtered.length !== l.WordIds.length) {
+                await this.MDBLexColl.updateOne(
+                    { _id: l._id },
+                    { $set: { WordIds: filtered } }
+                );
+            }
+        }
+        const ipa = await this.MDBIPAColl.find().toArray();
+        for (const i of ipa) {
+            const filtered = i.WordIds.filter(id => validIds.has(id));
+            if (filtered.length === 0) {
+                await this.MDBIPAColl.deleteOne({ _id: i._id });
+            } else if (filtered.length !== i.WordIds.length) {
+                await this.MDBIPAColl.updateOne(
+                    { _id: i._id },
+                    { $set: { WordIds: filtered } }
+                );
+            }
+        }
+        await this.MDBDefColl.deleteMany({
+            WordId: { $nin: [...validIds] }
+        });
+        await this.MDBEditColl.deleteMany({
+            WordId: { $nin: [...validIds] }
+        });
+    }
 }
+process.on("SIGINT", async()=>await DictionaryDB.MDBClient.close());
