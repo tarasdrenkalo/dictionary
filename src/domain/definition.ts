@@ -1,7 +1,9 @@
+import { i18n } from "../i18n/labels.js";
+
 export interface VersionedDefinition {
     VersionNumber:number;
-    Creator:string|null;
-    Content:string|HTMLElement;
+    Creator:string;
+    Content:i18n<string>;
     Sources:Array<string>|null;
     id:string;
 }
@@ -19,7 +21,7 @@ export interface GenericDefinition {
 }
 export interface DefinitionConstructiorOptions {
     versioning:number;
-    content:string|HTMLElement;
+    content:string;
     sources:Array<string>|null;
     creator:string;
     createdat:number|null;
@@ -40,7 +42,7 @@ export class Definition implements GenericDefinition {
         this.IsApproved = false;
         this.id = crypto.randomUUID();
         const current:VersionedDefinition = {
-            Content: options?.content,
+            Content: {English:options?.content},
             id:crypto.randomUUID(),
             Creator: options.creator,
             Sources: options.sources,
@@ -57,9 +59,9 @@ export class Definition implements GenericDefinition {
         this.IsVisible = false;
         this.IsDeleted = false;
     }
-    Edit(content:string|HTMLElement,by:string, sources:string[]) {
+    Edit(content:string,by:string, sources:string[]) {
         const current:VersionedDefinition = {
-            Content: content,
+            Content: {English:content},
             Creator: by,
             VersionNumber: Math.max(...this.Versions.map(v => v.VersionNumber), 0) + 1,
             Sources: sources,

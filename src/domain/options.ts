@@ -1,7 +1,8 @@
+
+import { i18n } from "../i18n/labels.js";
 import { CaseStructure } from "./cases.js";
 import { WordReference } from "./structure.js";
 import { TenseType } from "./tense.js";
-import { Language } from "./utils/language.js";
 import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
 export type PersonPerspective = 0|1|2|3;
 export type WordOptions = {
@@ -13,7 +14,6 @@ export type WordOptions = {
     personperspective?:PersonPerspective;
     meaning:string;
     gender?:Gender;
-    derive?:WordReference;
     ispropernoun?:boolean;
     isabbreviation?: boolean;
     iscolloquial?:boolean;
@@ -27,11 +27,11 @@ export type WordOptions = {
     euphemisms?: Array<WordReference>;
     isarchaic?: boolean;
     isneologism?: boolean;
-    contexts?: Array<WordReference|string>;
+    contexts?: Array<WordReference>;
     category?:string;
     isparasitic?:boolean;
     sources?:Array<string>;
-    language?:Language;
+    language?:keyof i18n<undefined>;
 }
 
 export type AdverbOptions = WordOptions & {

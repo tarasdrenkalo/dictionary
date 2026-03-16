@@ -1,5 +1,7 @@
-import { Morpheme } from "./utils/morpheme.js";
+import { i18n } from "../i18n/labels.js";
 import { Gerund } from "./utils/gerund.js";
+import { Morpheme } from "./utils/morpheme.js";
+
 
 
 export type TenseTime = "Present"|"Past"|"Future";
@@ -9,30 +11,30 @@ export type TenseType = "Present Simple"|"Present Progressive"|"Present Particip
 export interface TenseStructure {
   UK:{
     1:{
-      Singular:string|undefined,
-      Plural:string|undefined,
+      Singular:i18n<string>,
+      Plural:i18n<string>,
     },
     2:{
-      Singular:string|undefined,
-      Plural:string|undefined,
+      Singular:i18n<string>,
+      Plural:i18n<string>,
     },
     3:{
-      Singular:string|undefined,
-      Plural:string|undefined,
+      Singular:i18n<string>,
+      Plural:i18n<string>,
     },
   },
   US:{
     1:{
-      Singular:string|undefined,
-      Plural:string|undefined,
+      Singular:i18n<string>,
+      Plural:i18n<string>,
     },
     2:{
-      Singular:string|undefined,
-      Plural:string|undefined,
+      Singular:i18n<string>,
+      Plural:i18n<string>,
     },
     3:{
-      Singular:string|undefined,
-      Plural:string|undefined,
+      Singular:i18n<string>,
+      Plural:i18n<string>,
     },
   }
 }
@@ -84,40 +86,39 @@ export class Tense {
       Simple: {
         UK: {
           1: {
-            Singular: SimpleBG,
-            Plural: SimpleBG,
+            Singular: {English:SimpleBG||""},
+            Plural: {English:SimpleBG||""},
           },
           2: {
-            Singular: SimpleBG,
-            Plural: SimpleBG,
+            Singular: {English:SimpleBG||""},
+            Plural: {English:SimpleBG||""},
           },
           3: {
-            Singular:
-              t === "Past"
+            Singular:{English:(t === "Past"
                 ? gbed
                 : t === "Future"
                 ? `will ${w}`
-                : end,
-            Plural: SimpleBG,
+                : end)||""},
+              
+            Plural: {English:SimpleBG||""},
           },
         },
         US: {
           1: {
-            Singular: SimpleUS,
-            Plural: SimpleUS,
+            Singular: {English:SimpleUS||""},
+            Plural: {English:SimpleUS||""},
           },
           2: {
-            Singular: SimpleUS,
-            Plural: SimpleUS,
+            Singular: {English:SimpleUS||""},
+            Plural: {English:SimpleUS||""},
           },
           3: {
-            Singular:
-              t === "Past"
+            Singular:{English:(t === "Past"
                 ? used
                 : t === "Future"
                 ? `will ${w}`
-                : end,
-            Plural: SimpleUS,
+                : end)||""},
+            Plural: {English:SimpleUS||""},
           },
         },
       },
@@ -125,73 +126,73 @@ export class Tense {
       Progressive: {
         UK: {
           1: {
-            Singular: `${AuxBe[0]} ${gbing}`,
-            Plural: `${AuxBe[3]} ${gbing}`,
+            Singular: {English:`${AuxBe[0]} ${gbing}`},
+            Plural: {English:`${AuxBe[3]} ${gbing}`},
           },
           2: {
-            Singular: `${AuxBe[1]} ${gbing}`,
-            Plural: `${AuxBe[3]} ${gbing}`,
+            Singular: {English:`${AuxBe[1]} ${gbing}`},
+            Plural: {English:`${AuxBe[3]} ${gbing}`},
           },
           3: {
-            Singular: `${AuxBe[2]} ${gbing}`,
-            Plural: `${AuxBe[3]} ${gbing}`,
+            Singular: {English:`${AuxBe[2]} ${gbing}`},
+            Plural: {English:`${AuxBe[3]} ${gbing}`},
           },
         },
         US: {
           1: {
-            Singular: `${AuxBe[0]} ${using}`,
-            Plural: `${AuxBe[3]} ${using}`,
+            Singular: {English:`${AuxBe[0]} ${using}`},
+            Plural: {English:`${AuxBe[3]} ${using}`},
           },
           2: {
-            Singular: `${AuxBe[1]} ${using}`,
-            Plural: `${AuxBe[3]} ${using}`,
+            Singular: {English:`${AuxBe[1]} ${using}`},
+            Plural: {English:`${AuxBe[3]} ${using}`},
           },
           3: {
-            Singular: `${AuxBe[2]} ${using}`,
-            Plural: `${AuxBe[3]} ${using}`,
+            Singular: {English:`${AuxBe[2]} ${using}`},
+            Plural: {English:`${AuxBe[3]} ${using}`},
           },
         },
       },
 
       Participle: {
         UK: {
-          1: { Singular: gbedParticiple, Plural: gbedParticiple },
-          2: { Singular: gbedParticiple, Plural: gbedParticiple },
-          3: { Singular: gbedParticiple, Plural: gbedParticiple },
+          1: { Singular: {English:gbedParticiple||""}, Plural: {English:gbedParticiple||""}},
+          2: { Singular: {English:gbedParticiple||""}, Plural: {English:gbedParticiple||""}},
+          3: { Singular: {English:gbedParticiple||""}, Plural: {English:gbedParticiple||""}},
         },
         US: {
-          1: { Singular: usedParticiple, Plural: usedParticiple },
-          2: { Singular: usedParticiple, Plural: usedParticiple },
-          3: { Singular: usedParticiple, Plural: usedParticiple },
+          1: { Singular: {English:usedParticiple||""}, Plural: {English:usedParticiple||""}},
+          2: { Singular: {English:usedParticiple||""}, Plural: {English:usedParticiple||""}},
+          3: { Singular: {English:usedParticiple||""}, Plural: {English:usedParticiple||""}},
         },
       },
       Perfect: {
         UK: {
           1: {
-            Singular: `${AuxHave[0]} ${gbedParticiple}`,
-            Plural: `${AuxHave[0]} ${gbedParticiple}`,
+            Singular: {English:`${AuxHave[0]} ${gbedParticiple}`},
+            Plural: {English:`${AuxHave[0]} ${gbedParticiple}`},
           },
           2: {
-            Singular: `${AuxHave[1]} ${gbedParticiple}`,
-            Plural: `${AuxHave[0]} ${gbedParticiple}`,
+            Singular: {English:`${AuxHave[1]} ${gbedParticiple}`},
+            Plural: {English:`${AuxHave[0]} ${gbedParticiple}`},
           },
           3: {
-            Singular: `${AuxHave[1]} ${gbedParticiple}`,
-            Plural: `${AuxHave[0]} ${gbedParticiple}`,
+            Singular: {English:`${AuxHave[1]} ${gbedParticiple}`},
+            Plural: {English:`${AuxHave[1]} ${gbedParticiple}`},
           },
         },
         US: {
           1: {
-            Singular: `${AuxHave[0]} ${usedParticiple}`,
-            Plural: `${AuxHave[0]} ${usedParticiple}`,
+            Singular: {English:`${AuxHave[0]} ${usedParticiple}`},
+            Plural: {English:`${AuxHave[0]} ${usedParticiple}`},
           },
           2: {
-            Singular: `${AuxHave[1]} ${usedParticiple}`,
-            Plural: `${AuxHave[0]} ${usedParticiple}`,
+            Singular: {English:`${AuxHave[1]} ${usedParticiple}`},
+            Plural: {English:`${AuxHave[0]} ${usedParticiple}`},
           },
           3: {
-            Singular: `${AuxHave[1]} ${usedParticiple}`,
-            Plural: `${AuxHave[0]} ${usedParticiple}`,
+            Singular: {English:`${AuxHave[1]} ${usedParticiple}`},
+            Plural: {English:`${AuxHave[0]} ${usedParticiple}`},
           },
         },
       },

@@ -5,9 +5,7 @@
   "scripts": {
     "build": "tsc",
     "setup": "npm install node typescript",
-    "test-buildquery": "node ./build/tests/buildquery.js",
-    "test-dbtest": "node ./build/tests/dbtest.js",
-    "test-dictionarylookup": "node ./build/tests/dictionarylookup.js"
+    "test-db":"node ./build/examples/inserttodb.js"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",

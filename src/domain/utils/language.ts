@@ -1,3 +1,5 @@
+import { i18n } from "../../i18n/labels.js";
+
 export interface Letter {
     // --- A family ---
     /** Latin small letter a */ A:"a",
@@ -178,9 +180,8 @@ export interface Letter {
     /** Cyrillic small letter yu (ю) */ CYRILLIC_YU:"ю",
     /** Cyrillic small letter ya (я) */ CYRILLIC_YA:"я"
 }
-
 export interface Language {
-    Name:string,
+    Name:keyof i18n<string>,
     GetLetters(): Array<keyof Letter>;
     HasLetter(l: keyof Letter): boolean;
     GetOrderByLetter(l: keyof Letter): number|undefined;

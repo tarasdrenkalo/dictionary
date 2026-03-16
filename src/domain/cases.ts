@@ -1,8 +1,8 @@
-import { English, Language } from "./utils/language.js";
+import { i18n } from "../i18n/labels.js";
 
 export interface CasePlurality {
-    Singular:string;
-    Plural:string;
+    Singular:i18n<string>;
+    Plural:i18n<string>;
 }
 export interface CaseStructure {
     Nominative:CasePlurality,
@@ -14,16 +14,15 @@ export interface CaseStructure {
     Vocative:CasePlurality
 }
 export class Cases {
-    static All(word:string, language:Language=English):CaseStructure{
-        if(language != English) throw "Only English Supported!";
+    static All(word:string):CaseStructure{
         return {
-            Nominative:{"Singular":word, "Plural":word},
-            Genitive:{"Singular":word, "Plural":word},
-            Dative:{"Singular":word, "Plural":word},
-            Accusative:{"Singular":word, "Plural":word},
-            Ablative:{"Singular":word, "Plural":word},
-            Local:{"Singular":word, "Plural":word},
-            Vocative:{"Singular":word, "Plural":word}
+            Nominative:{Singular:{English:word}, Plural:{English:word}},
+            Genitive:{Singular:{English:word}, Plural:{English:word}},
+            Dative:{Singular:{English:word}, Plural:{English:word}},
+            Accusative:{Singular:{English:word}, Plural:{English:word}},
+            Ablative:{Singular:{English:word}, Plural:{English:word}},
+            Local:{Singular:{English:word}, Plural:{English:word}},
+            Vocative:{Singular:{English:word}, Plural:{English:word}}
         }
     }
 }

@@ -1,26 +1,27 @@
-import { Words } from "./structure.js";
+import { WordReference } from "./structure.js";
+
 export interface ThesaurusAlternatives {
-    Adjective?: Words,
-    Adverb?: Words,
-    Conjunction?: Words,
-    Determiner?: Words,
-    Exclamation?: Words,
-    Interjection?: Words,
-    Noun?: Words,
-    Numeral?: Words,
-    Participle?: Words,
-    Preposition?: Words,
-    Pronoun?: Words,
-    Propernoun?: Words,
-    Verb?: Words,
-    Unknown?: Words,
+    Adjective?: Array<WordReference>,
+    Adverb?: Array<WordReference>,
+    Conjunction?: Array<WordReference>,
+    Determiner?: Array<WordReference>,
+    Exclamation?: Array<WordReference>,
+    Interjection?: Array<WordReference>,
+    Noun?: Array<WordReference>,
+    Numeral?: Array<WordReference>,
+    Participle?: Array<WordReference>,
+    Preposition?: Array<WordReference>,
+    Pronoun?: Array<WordReference>,
+    Propernoun?: Array<WordReference>,
+    Verb?: Array<WordReference>,
+    Unknown?: Array<WordReference>,
 }
 
 
 export interface Thesaurus {
-    Synonyms?:Words,
-    Antonyms?:Words,
-    Omonyms?:Words,
-    Paronyms?:Words,
+    Synonyms?:Array<WordReference>,
+    Antonyms?:Array<WordReference>,
+    Omonyms?:Array<WordReference>,
+    Paronyms?:Array<WordReference>,
     Alternatives?: ThesaurusAlternatives,
 }
