@@ -1,11 +1,14 @@
 {
   "name": "dictionary",
+  "displayName": "Dictionary (SDK)",
   "version": "1.0.0",
   "description": "Test",
   "scripts": {
     "build": "tsc",
-    "setup": "npm install node typescript",
-    "test-db":"node ./build/examples/inserttodb.js"
+    "start": "npm install node typescript && npm link",
+    "stop": "npm unlink -g dictionary",
+    "test-create":"node ./build/examples/ex-inserttodb.js",
+    "test-delete":"node ./build/examples/ex-deletefromdb.js"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",
@@ -15,5 +18,11 @@
   "dependencies": {
     "mongodb": "^7.1.0",
     "node": "^25.8.0"
+  },
+  "readme": "./README.md",
+  "license":"MIT",
+  "bin": {
+    "dictionary":"./cli.js",
+    "dictionary-test":"./cli-test.js"
   }
 }

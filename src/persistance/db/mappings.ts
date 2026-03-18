@@ -10,8 +10,8 @@ import { Gender } from "../../domain/variants.js";
 import { i18n } from "../../i18n/labels.js";
 import { DBModFlags, DBSEOFlags } from "./flags.js";
 export interface DBWordsCollection {
+    WordId:string;
     Word:i18n<string>,
-    WordId:string,
     Aliases:Array<WordReference>,
     Thesaurus?:Thesaurus,
 }
@@ -54,7 +54,7 @@ export type InsertCollectionsToDB = {[k in keyof DBCollections]:DBCollections[k]
 
 export interface DBSearchQuery {
     word?: string;
-    wordId?: string;
+    wordid?: string;
     pos?: keyof PartOfSpeech;
     gender?: Gender;
     kind?: string;

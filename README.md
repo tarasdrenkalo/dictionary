@@ -2,26 +2,15 @@
 Yes, that's it, likely as portfolio. This is a "Dictionary" but open-source (you can see exact code)
 ## Roadmap
 ### Now TODO
-* Bug fixes
-* Improvement of Design
-
+[Currently addressed](https://github.com/tarasdrenkalo/dictionary/issues?q=state%3Aopen%20label%3AAssignment)
 ### Future TODO
-* Create Dictionary CRUD Operations
-* Introduction of Thesaurus
-* Implementation of Dictionary API Vendors Integration
+[Future improvements](https://github.com/tarasdrenkalo/dictionary/issues?q=state%3Aopen%20author%3Atarasdrenkalo)
 ### Thanks
 Thank you for viewing this art! Development is in process, check back later!
-
 ## Usage (Draft, not final)
 - Create Codespace
-- Run `npm run setup` to install all necessary packages
+- Run `npm start` to prepare the environment for testing
 - Run `npm run build` to compile typescript into node.js
-- Then you can test examples of usage:
-* `npm run test-buildquery`
-* `npm run test-dbtest`
-* `npm run test-dictionarylookup`
+- Then you can run `dictionary-test <test>` to run the tests
+- Run `npm stop` if you feel that you're done.
 Check for more later!
-## Secrets
-```typescript
-console.log("You're viewing highlighted code! Cool!");
-```

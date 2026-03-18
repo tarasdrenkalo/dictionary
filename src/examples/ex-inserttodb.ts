@@ -9,5 +9,7 @@ let loveaction = Word.Create("Verb", {
     word: "love",
     meaning: "Deed"
 });
-DictionaryDB.InsertToDB(DictionaryDB.PackMany(lovefeeling, loveaction));
+await DictionaryDB.InsertToDB(DictionaryDB.PackMany(lovefeeling, loveaction));
+console.log("Inserted to db.");
 console.log(await DictionaryDB.Search({word:"love", pos:"Noun"}));
+console.log("Done.");

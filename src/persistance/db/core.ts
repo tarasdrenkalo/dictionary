@@ -11,7 +11,7 @@ export class DictionaryDB {
     private static MDBEditColl = this.MDBDictionary.collection<DBEditorialCollection>("Editorial");
     private static MDBDefColl = this.MDBDictionary.collection<DBDefinitionsCollection>("Definitions");
     private static MDBLexColl = this.MDBDictionary.collection<DBLexemeCollection>("Lexeme");
-    private static MDBIPAColl = this.MDBDictionary.collection<DBMorphemeCollection>("IPA");
+    private static MDBIPAColl = this.MDBDictionary.collection<DBMorphemeCollection>("Morpheme");
 
     static Pack(w: Word<keyof PartOfSpeech>): DBCollections {
         const flags:Set<DBModFlags> = new Set();
@@ -56,8 +56,8 @@ export class DictionaryDB {
         };
         let ReturnCollections:DBCollections = {
             Word: {
+                WordId:w.UniqueId,
                 Word: w.Name,
-                WordId: w.UniqueId,
                 Aliases: [selfreference],
             },
             Definition: {
@@ -74,6 +74,7 @@ export class DictionaryDB {
                 WordIds: [w.UniqueId],
                 POS: w.POS,
                 Gender: w.Gender,
+                Cases:needscases?w.Cases:undefined,
                 PersonPerspective: w.PersonPerspective,
                 Comparative: (w instanceof Adjective || w instanceof Participle) ? w.Comparative ||{English:Adjective.CS(w.Name.English, true)} : undefined,
                 Superlative: (w instanceof Adjective || w instanceof Participle) ? w.Superlative ||{English:Adjective.CS(w.Name.English, false)} : undefined,
@@ -87,81 +88,68 @@ export class DictionaryDB {
         }
         return ReturnCollections;
     }
-    static PackMany(...words: Word<keyof PartOfSpeech>[]):InsertCollectionsToDB {
-        const WordMap = new Map<string, DBWordsCollection>();
+    static PackMany(...words: Word<keyof PartOfSpeech>[]): InsertCollectionsToDB {
         const IPAMap = new Map<string, DBMorphemeCollection>();
         const LexemeMap = new Map<string, DBLexemeCollection>();
-        let PackedCollections = {
-            Editorial: [] as DBEditorialCollection[],
-            Lexeme: [] as DBLexemeCollection[],
-            IPA: [] as DBMorphemeCollection[],
-            Word: [] as DBWordsCollection[],
-            Definition: [] as DBDefinitionsCollection[],
+        const PackedCollections: InsertCollectionsToDB = {
+            Editorial: [],
+            Lexeme: [],
+            IPA: [],
+            Word: [],
+            Definition: [],
         };
         for (const word of words) {
             const packed = this.Pack(word);
-            const wkey = JSON.stringify(packed.Word.Word);
-
-            if (WordMap.has(wkey)) {
-                const existing = WordMap.get(wkey)!;
-                existing.Aliases.push({
-                    Exists: true,
-                    WordId: packed.Word.WordId,
-                    Name: packed.Word.Word,
-                    ExcludeFromWordChoice: false
-                });
-            } else {
-                WordMap.set(wkey,{ ...packed.Word });
-            }
+            PackedCollections.Word.push(packed.Word);
             PackedCollections.Definition.push(packed.Definition);
             PackedCollections.Editorial.push(packed.Editorial);
-            const ipaKey = JSON.stringify({
+            const IpaKey = JSON.stringify({
                 IPA: packed.IPA.IPA,
                 Morpheme: packed.IPA.Morpheme
             });
-            if (IPAMap.has(ipaKey)) {
-                IPAMap.get(ipaKey)!.WordIds.push(packed.Word.WordId);
+            if (IPAMap.has(IpaKey)) {
+                IPAMap.get(IpaKey)!.WordIds.push(word.UniqueId);
             } else {
-                IPAMap.set(ipaKey, { ...packed.IPA });
+                IPAMap.set(IpaKey, { ...packed.IPA });
             }
             const LexemeKey = JSON.stringify({
                 POS: packed.Lexeme.POS,
                 Gender: packed.Lexeme.Gender,
                 Kind: packed.Lexeme.Kind,
+                Cases: packed.Lexeme.Cases,
                 Comparative: packed.Lexeme.Comparative,
                 Superlative: packed.Lexeme.Superlative,
                 PersonPerspective: packed.Lexeme.PersonPerspective
             });
-
             if (LexemeMap.has(LexemeKey)) {
-                LexemeMap.get(LexemeKey)!.WordIds.push(packed.Word.WordId);
+                LexemeMap.get(LexemeKey)!.WordIds.push(word.UniqueId);
             } else {
                 LexemeMap.set(LexemeKey, { ...packed.Lexeme });
             }
         }
 
-        PackedCollections.Word = [...WordMap.values()];
         PackedCollections.IPA = [...IPAMap.values()];
         PackedCollections.Lexeme = [...LexemeMap.values()];
+
         return PackedCollections;
     }
     static async InsertToDB(query: InsertCollectionsToDB) {
         await this.MDBClient.connect();
         await this.MDBWordsColl.bulkWrite(
-        query.Word.map(w => ({
-            updateOne: {
-            filter: { "Word.English": w.Word.English },
-            update: {
-                $setOnInsert: {
-                Word: w.Word,
-                WordId: w.WordId,
-                Thesaurus: w.Thesaurus
-                },
-                $addToSet: { Aliases: { $each: w.Aliases } }
-            },
-            upsert: true
-            }
-        }))
+            query.Word.map(w => ({
+                updateOne: {
+                    filter: { WordId: w.WordId },
+                    update: {
+                        $setOnInsert: {
+                            WordId: w.WordId,
+                            Word: w.Word,
+                            Thesaurus: w.Thesaurus
+                        },
+                        $addToSet: { Aliases: { $each: w.Aliases ?? [] } }
+                    },
+                    upsert: true
+                }
+            }))
         );
         await this.MDBDefColl.insertMany(query.Definition);
         await this.MDBEditColl.insertMany(query.Editorial);
@@ -186,6 +174,7 @@ export class DictionaryDB {
                         POS: l.POS,
                         Gender: l.Gender,
                         Kind: l.Kind,
+                        Cases: l.Cases,
                         Comparative: l.Comparative,
                         Superlative: l.Superlative,
                         PersonPerspective: l.PersonPerspective
@@ -197,20 +186,21 @@ export class DictionaryDB {
                 }
             }))
         );
+
         await this.MDBClient.close();
     }
     static BuildFilters(q: DBSearchQuery): DBFilters {
         const filters: DBFilters = {};
         if (q.word) {
-            const lang = q.language ?? "English";
+            const lang = q.language ??"English";
             filters.Word = {
                 [`Word.${lang}`]: q.word
             };
         }
-        if (q.wordId) {
+        if (q.wordid) {
             filters.Word = {
                 ...(filters.Word ?? {}),
-                WordId: q.wordId
+                WordId: q.wordid
             };
         }
         if (q.pos || q.gender || q.kind) {
@@ -221,9 +211,7 @@ export class DictionaryDB {
             };
         }
         if (q.ipa) {
-            filters.IPA = {
-                IPA: q.ipa
-            };
+            filters.IPA = { IPA: q.ipa };
         }
         if (q.flags || q.seo) {
             filters.Editorial = {
@@ -233,52 +221,92 @@ export class DictionaryDB {
         }
         return filters;
     }
-    static async Search(q: DBSearchQuery): Promise<Word<keyof PartOfSpeech>[]> {
+    static async Search(
+        q: DBSearchQuery,
+        IncludeParents: boolean = false
+    ): Promise<Word<keyof PartOfSpeech>[]> {
         await this.MDBClient.connect();
         const filters = this.BuildFilters(q);
-        const words = await this.MDBWordsColl
+        const RootWords = await this.MDBWordsColl
             .find(filters.Word ?? {})
             .toArray();
-        if (words.length === 0) return [];
-        const ids = words.map(w => w.WordId);
+        if (RootWords.length === 0) {
+            await this.MDBClient.close();
+            return [];
+        }
+        const IdSet = new Set<string>();
+        // Always include matched words
+        for (const w of RootWords) {
+            IdSet.add(w.WordId);
+        }
+        // 2️⃣ Optionally include parents
+        if (IncludeParents) {
+            const RootIds = RootWords.map(w => w.WordId);
+            const parents = await this.MDBWordsColl.find({
+                "Aliases.WordId": { $in: RootIds }
+            }).toArray();
+            for (const p of parents) {
+                IdSet.add(p.WordId);
+            }
+        }
+        const ids = [...IdSet];
+        const WordDocs = await this.MDBWordsColl.find({
+            WordId: { $in: ids }
+        }).toArray();
+
+        // 4️⃣ Load related collections
         const lexemes = await this.MDBLexColl.find({
             WordIds: { $in: ids },
             ...(filters.Lexeme ?? {})
         }).toArray();
+
         const ipa = await this.MDBIPAColl.find({
             WordIds: { $in: ids },
             ...(filters.IPA ?? {})
         }).toArray();
+
         const editorial = await this.MDBEditColl.find({
             WordId: { $in: ids },
             ...(filters.Editorial ?? {})
         }).toArray();
+
         const defs = await this.MDBDefColl.find({
             WordId: { $in: ids }
         }).toArray();
+
+        // 5️⃣ Build domain objects
         const result: Word<keyof PartOfSpeech>[] = [];
-        for (const w of words) {
-            const lex = lexemes.find(l => l.WordIds.includes(w.WordId));
+
+        for (const wdoc of WordDocs) {
+            const id = wdoc.WordId;
+
+            const lex = lexemes.find(l => l.WordIds.includes(id));
             if (!lex) continue;
-            const def = defs.find(d => d.WordId === w.WordId);
-            const ipaEntry = ipa.find(i => i.WordIds.includes(w.WordId));
-            const edit = editorial.find(e => e.WordId === w.WordId);
+
+            const def = defs.find(d => d.WordId === id);
+            const ipaEntry = ipa.find(i => i.WordIds.includes(id));
+            const edit = editorial.find(e => e.WordId === id);
+
             const word = Word.Create(lex.POS, {
-                word: w.Word.English,
+                word: wdoc.Word.English,
                 meaning: ""
             });
-            word.UniqueId = w.WordId;
-            word.Name = w.Word;
-            word.Aliases = w.Aliases;
+
+            word.UniqueId = id;
+            word.Name = wdoc.Word;
+            word.Aliases = wdoc.Aliases ?? [];
+
             if (ipaEntry) {
                 word.IPA = ipaEntry.IPA;
                 word.Morpheme = ipaEntry.Morpheme;
             }
+
             if (def) {
                 word.Denotation = Definition.FromJSON(def.Denotation);
                 if (def.Connotation)
                     word.Connotation = Definition.FromJSON(def.Connotation);
             }
+
             if (edit) {
                 const f = new Set(edit.Flags);
                 word.IsRecordComplete = !f.has("Incomplete");
@@ -295,105 +323,120 @@ export class DictionaryDB {
                 word.Visible = edit.SEO.includes("Visible");
                 word.Indexable = edit.SEO.includes("Indexable");
                 word.IsShortened = f.has("Shortened");
-                if(word instanceof Noun) {
+                if (word instanceof Noun) {
                     word.IsSingular = f.has("Singular");
                     word.IsPlural = f.has("Plural");
                     word.IsSingularOnly = f.has("SingularOnly");
                     word.IsPluralOnly = f.has("PluralOnly");
                     word.IsCountable = !f.has("Uncountable");
                 }
-                if(word instanceof Verb || word instanceof Participle){
+
+                if (word instanceof Verb || word instanceof Participle) {
                     word.IsTransitive = f.has("Transitive");
                     word.IsActive = f.has("Active");
                 }
             }
-            if(word instanceof Adjective || word instanceof Participle){
-                word.Comparative = lex.Comparative||undefined;
-                word.Superlative = lex.Superlative||undefined;
+            if (word instanceof Adjective || word instanceof Participle) {
+                word.Comparative = lex.Comparative ?? undefined;
+                word.Superlative = lex.Superlative ?? undefined;
             }
             word.Gender = lex.Gender;
             word.PersonPerspective = lex.PersonPerspective;
+
             result.push(word);
         }
         await this.MDBClient.close();
         return result;
     }
     static async DeleteById(id: string) {
-        await this.MDBClient.connect();
-        await this.MDBWordsColl.deleteOne({ WordId: id });
-        await this.MDBDefColl.deleteOne({ WordId: id });
-        await this.MDBEditColl.deleteOne({ WordId: id });
-        await this.MDBLexColl.updateMany(
-            { WordIds: id },
-            { $pull: { WordIds: id } }
-        );
-        await this.MDBIPAColl.updateMany(
-            { WordIds: id },
-            { $pull: { WordIds: id } }
-        );
-        await this.MDBLexColl.deleteMany({ WordIds: { $size: 0 } });
-        await this.MDBIPAColl.deleteMany({ WordIds: { $size: 0 } });
-        await this.MDBClient.close();
+    await this.MDBClient.connect();
+        try {
+            await this.MDBWordsColl.deleteOne({ WordId: id });
+            await this.MDBWordsColl.updateMany(
+                { "Aliases.WordId": id },
+                { $pull: { Aliases: { WordId: id } } }
+            );
+            await this.MDBDefColl.deleteOne({ WordId: id });
+            await this.MDBEditColl.deleteOne({ WordId: id });
+            await this.MDBLexColl.updateMany(
+                { WordIds: id },
+                { $pull: { WordIds: id } }
+            );
+            await this.MDBIPAColl.updateMany(
+                { WordIds: id },
+                { $pull: { WordIds: id } }
+            );
+            await this.MDBLexColl.deleteMany({ WordIds: { $size: 0 } });
+            await this.MDBIPAColl.deleteMany({ WordIds: { $size: 0 } });
+        } finally {
+            await this.MDBClient.close();
+        }
     }
+
     static async DeleteManyById(ids: string[]) {
         await this.MDBClient.connect();
-        await this.MDBWordsColl.deleteMany({
-            WordId: { $in: ids }
-        });
-        await this.MDBDefColl.deleteMany({
-            WordId: { $in: ids }
-        });
-        await this.MDBEditColl.deleteMany({
-            WordId: { $in: ids }
-        });
-        await this.MDBLexColl.updateMany(
-            { WordIds: { $in: ids } },
-            { $pull: { WordIds: { $in: ids } } }
-        );
-        await this.MDBIPAColl.updateMany(
-            { WordIds: { $in: ids } },
-            { $pull: { WordIds: { $in: ids } } }
-        );
-        await this.MDBLexColl.deleteMany({ WordIds: { $size: 0 } });
-        await this.MDBIPAColl.deleteMany({ WordIds: { $size: 0 } });
-        await this.MDBClient.close();
+        try {
+            await this.MDBWordsColl.deleteMany({ WordId: { $in: ids } });
+            await this.MDBWordsColl.updateMany(
+                { "Aliases.WordId": { $in: ids } },
+                { $pull: { Aliases: { WordId: { $in: ids } } } }
+            );
+            await this.MDBDefColl.deleteMany({ WordId: { $in: ids } });
+            await this.MDBEditColl.deleteMany({ WordId: { $in: ids } });
+            await this.MDBLexColl.updateMany(
+                { WordIds: { $in: ids } },
+                { $pull: { WordIds: { $in: ids } } }
+            );
+            await this.MDBIPAColl.updateMany(
+                { WordIds: { $in: ids } },
+                { $pull: { WordIds: { $in: ids } } }
+            );
+            await this.MDBLexColl.deleteMany({ WordIds: { $size: 0 } });
+            await this.MDBIPAColl.deleteMany({ WordIds: { $size: 0 } });
+        } finally {
+            await this.MDBClient.close();
+        }
     }
     static async PurgeBrokenReferences() {
         await this.MDBClient.connect();
-        const words = await this.MDBWordsColl
-            .find({}, { projection: { WordId: 1 } })
-            .toArray();
-        const validIds = new Set(words.map(w => w.WordId));
-        const lexemes = await this.MDBLexColl.find().toArray();
-        for (const l of lexemes) {
-            const filtered = l.WordIds.filter(id => validIds.has(id));
-            if (filtered.length === 0) {
-                await this.MDBLexColl.deleteOne({ _id: l._id });
-            } else if (filtered.length !== l.WordIds.length) {
-                await this.MDBLexColl.updateOne(
-                    { _id: l._id },
-                    { $set: { WordIds: filtered } }
-                );
+        try {
+            const words = await this.MDBWordsColl
+                .find({}, { projection: { WordId: 1 } })
+                .toArray();
+            const ValidIds = new Set(words.map(w => w.WordId));
+            const valid = [...ValidIds];
+            const lexemes = await this.MDBLexColl.find().toArray();
+            for (const l of lexemes) {
+                const filtered = (l.WordIds ?? []).filter(id => ValidIds.has(id));
+                if (filtered.length === 0) {
+                    await this.MDBLexColl.deleteOne({ _id: l._id });
+                } else if (filtered.length !== l.WordIds.length) {
+                    await this.MDBLexColl.updateOne(
+                        { _id: l._id },
+                        { $set: { WordIds: filtered } }
+                    );
+                }
             }
-        }
-        const ipa = await this.MDBIPAColl.find().toArray();
-        for (const i of ipa) {
-            const filtered = i.WordIds.filter(id => validIds.has(id));
-            if (filtered.length === 0) {
-                await this.MDBIPAColl.deleteOne({ _id: i._id });
-            } else if (filtered.length !== i.WordIds.length) {
-                await this.MDBIPAColl.updateOne(
-                    { _id: i._id },
-                    { $set: { WordIds: filtered } }
-                );
+            const ipa = await this.MDBIPAColl.find().toArray();
+            for (const i of ipa) {
+                const filtered = (i.WordIds ?? []).filter(id => ValidIds.has(id));
+                if (filtered.length === 0) {
+                    await this.MDBIPAColl.deleteOne({ _id: i._id });
+                } else if (filtered.length !== i.WordIds.length) {
+                    await this.MDBIPAColl.updateOne(
+                        { _id: i._id },
+                        { $set: { WordIds: filtered } }
+                    );
+                }
             }
+            await this.MDBDefColl.deleteMany({ WordId: { $nin: valid } });
+            await this.MDBEditColl.deleteMany({ WordId: { $nin: valid } });
+            await this.MDBWordsColl.updateMany(
+                {},
+                { $pull: { Aliases: { WordId: { $nin: valid } } } }
+            );
+        } finally {
+            await this.MDBClient.close();
         }
-        await this.MDBDefColl.deleteMany({
-            WordId: { $nin: [...validIds] }
-        });
-        await this.MDBEditColl.deleteMany({
-            WordId: { $nin: [...validIds] }
-        });
     }
 }
-process.on("SIGINT", async()=>await DictionaryDB.MDBClient.close());
