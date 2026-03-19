@@ -253,8 +253,6 @@ export class DictionaryDB {
         const WordDocs = await this.MDBWordsColl.find({
             WordId: { $in: ids }
         }).toArray();
-
-        // 4️⃣ Load related collections
         const lexemes = await this.MDBLexColl.find({
             WordIds: { $in: ids },
             ...(filters.Lexeme ?? {})
@@ -273,8 +271,6 @@ export class DictionaryDB {
         const defs = await this.MDBDefColl.find({
             WordId: { $in: ids }
         }).toArray();
-
-        // 5️⃣ Build domain objects
         const result: Word<keyof PartOfSpeech>[] = [];
 
         for (const wdoc of WordDocs) {
