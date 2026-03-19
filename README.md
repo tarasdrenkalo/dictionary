@@ -11,6 +11,8 @@ Thank you for viewing this art! Development is in process, check back later!
 - Create Codespace
 - Run `npm start` to prepare the environment for testing
 - Run `npm run build` to compile typescript into node.js
-- Then you can run `dictionary-test <test>` to run the tests
-- Run `npm stop` if you feel that you're done.
+## Available Commands
+- `dictionary-test -h` / `dictionary-test --help` -- Display Help Page
+- `dictionary-test -v` / `dictionary-test --version` -- Display Package Version
+- `dictionary-test -t <test>` / `dictionary-test --test <test>` -- Run Tests:
 Check for more later!
