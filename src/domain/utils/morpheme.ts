@@ -2,8 +2,6 @@ import { GraphemeSpelling, GraphemeSymbol, Grapheme, POSSIBLE_SPELLINGS, SHORT_V
 import { Language, Letter, English } from "./language.js";
 
 export interface MorphemeStructure {
-  Word: string;
-  Language: Language;
   Schema: string;
   Vowels: Array<keyof Letter>;
   Consonants: Array<keyof Letter>;
@@ -20,10 +18,6 @@ export class Morpheme {
   private static readonly LETTER_VOWELS: Array<keyof Letter> =
     ["A","E","I","O","U","Y"];
 
-  /* ============================
-     1️⃣ BASIC LETTER SCHEMA
-     ============================ */
-
   static GetSchema(word: string, lang: Language): string {
     const letters = word
       .replace(/[^\p{L}]+/gu, "")
@@ -38,10 +32,6 @@ export class Morpheme {
       .map(l => consonants.includes(l) ? "c" : "v")
       .join("");
   }
-  /* ============================
-     2️⃣ GRAPHEME EXTRACTION
-     Handles split digraphs
-     ============================ */
 
   static ExtractGraphemes(word: string): GraphemeSymbol[] {
     const w = word
@@ -77,9 +67,6 @@ export class Morpheme {
     }
     return result;
   }
-  /* ============================
-     3️⃣ AUTO RESOLUTION RULES
-     ============================ */
   private static TryResolve(
     grapheme: GraphemeSymbol,
     word: string,
@@ -117,9 +104,6 @@ export class Morpheme {
     }
     return null;
   }
-  /* ============================
-     4️⃣ SMART GENERATOR
-     ============================ */
   static Generate(word: string): Grapheme[] {
     const graphemes = this.ExtractGraphemes(word);
     return graphemes.map((g, index) => {
@@ -143,10 +127,6 @@ export class Morpheme {
       };
     });
   }
-
-  /* ============================
-     5️⃣ RESOLVED BUILDER
-     ============================ */
 
   private static BuildResolved(
     g: GraphemeSymbol,
@@ -183,8 +163,6 @@ export class Morpheme {
       .filter(l => !this.LETTER_VOWELS.includes(l));
 
     return {
-      Word: word,
-      Language: English,
       Schema: this.GetSchema(word, English),
       Vowels: letters.filter(l => this.LETTER_VOWELS.includes(l)),
       Consonants: letters.filter(l => consonants.includes(l)),

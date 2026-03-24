@@ -5,7 +5,6 @@ import { PersonPerspective, OptionsByPartOfSpeech, AdverbOptions, ConjunctionOpt
 import { TenseContainer, TenseType, Tense } from "./tense.js";
 import { Thesaurus } from "./thesaurus.js";
 import { Grapheme } from "./utils/grapheme.js";
-import { English } from "./utils/language.js";
 import { Morpheme, MorphemeStructure } from "./utils/morpheme.js";
 import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
 
@@ -113,8 +112,6 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     Visible: boolean;
     Indexable: boolean;
     ExcludeFromWordChoice: boolean;
-    Language: any;
-    Meaning: any;
     constructor(pos:T, options:OptionsByPartOfSpeech[keyof OptionsByPartOfSpeech]){
         if(!options.word || options.word === "") throw "Eh, did you forget something?";
         let uid = crypto.randomUUID();
@@ -136,7 +133,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.IsPropernoun = pos === "Propernoun";
         this.IsAbbreviation = options.isabbreviation ||false;
         this.IsColloquial = options.iscolloquial ||false;
-        this.IsUsedFormally = /(\w)\1{2,}/gmi.test(options.word) && (options.isusedfomally||true);
+        this.IsUsedFormally = options.isusedfomally||true;
         this.IsUsedCasually = options.isusedcasually||true;
         this.IsProfane = options.isprofane||false;
         this.IsDerogatory = options.isderogatory||false;

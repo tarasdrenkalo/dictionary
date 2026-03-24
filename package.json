@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Test",
   "scripts": {
-    "start": "npm install node typescript chalk && tsc && npm link",
+    "start": "npm install && tsc && npm link",
     "build": "tsc",
     "stop": "npm unlink -g dictionary",
     "test-create": "node ./build/examples/ex-inserttodb.js",
