@@ -21,12 +21,12 @@ export interface DBMorphemeCollection {
     Morpheme:i18n<MorphemeStructure>,
 }
 export interface DBDefinitionsCollection {
-    WordId:string,
+    WordIds:string[],
     Denotation:GenericDefinition,
     Connotation?:GenericDefinition,
 }
 export interface DBEditorialCollection {
-    WordId:string,
+    WordIds:Array<string>,
     Flags:Array<DBModFlags>,
     SEO:Array<DBSEOFlags>;
 }
@@ -36,7 +36,7 @@ export interface DBLexemeCollection {
     Gender:Gender,
     Tenses?:TenseContainer,
     Cases?:CaseStructure,
-    CurrentCase?:keyof CaseStructure;
+    CurrentCase?:keyof CaseStructure,
     Kind?:string,
     Comparative?:i18n<string>,
     Superlative?:i18n<string>,

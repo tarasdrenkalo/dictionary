@@ -1,8 +1,8 @@
-import { i18n } from "../i18n/labels.js";
+import { WordReference } from "./structure.js";
 
 export interface CasePlurality {
-    Singular:i18n<string>;
-    Plural:i18n<string>;
+    Singular:WordReference;
+    Plural:WordReference;
 }
 export interface CaseStructure {
     Nominative:CasePlurality,
@@ -14,15 +14,15 @@ export interface CaseStructure {
     Vocative:CasePlurality
 }
 export class Cases {
-    static All(word:string):CaseStructure{
+    static All(word:WordReference):CaseStructure{
         return {
-            Nominative:{Singular:{English:word}, Plural:{English:word}},
-            Genitive:{Singular:{English:word}, Plural:{English:word}},
-            Dative:{Singular:{English:word}, Plural:{English:word}},
-            Accusative:{Singular:{English:word}, Plural:{English:word}},
-            Ablative:{Singular:{English:word}, Plural:{English:word}},
-            Local:{Singular:{English:word}, Plural:{English:word}},
-            Vocative:{Singular:{English:word}, Plural:{English:word}}
+            Nominative:{Singular:word, Plural:word},
+            Genitive:{Singular:word, Plural:word},
+            Dative:{Singular:word, Plural:word},
+            Accusative:{Singular:word, Plural:word},
+            Ablative:{Singular:word, Plural:word},
+            Local:{Singular:word, Plural:word},
+            Vocative:{Singular:word, Plural:word}
         }
     }
 }

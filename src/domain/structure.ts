@@ -116,12 +116,13 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         if(!options.word || options.word === "") throw "Eh, did you forget something?";
         let uid = crypto.randomUUID();
         this.Aliases = [];
-        this.Aliases.push({
+        let selfref:WordReference = {
             ExcludeFromWordChoice: options.excludefromwordchoices || false,
             Name: {English:options.word},
             Exists: true,
             WordId: uid,
-        })
+        }
+        this.Aliases.push(selfref)
         this.IsRecordComplete = false;
         this.Exists = true;
         this.UniqueId = uid;
@@ -153,7 +154,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.Tenses = (pos === "Verb" || pos === "Participle") ? Tense.BuildAll(this.Name.English):undefined;
         this.CurrentTense = "Present Simple";
         this.PersonPerspective = options.personperspective||0;
-        this.Cases = (pos === "Noun"||pos === "Adjective") ? Cases.All(this.Name.English) : undefined;
+        this.Cases = (pos === "Noun"||pos === "Pronoun" || pos==="Propernoun"||pos==="Adjective") ? Cases.All(selfref) : undefined;
         this.Euphemisms = options.euphemisms||[];
         this.CurrentCase = options.case||"Nominative";
         this.IsArchaic = options.isarchaic||false;

@@ -1,15 +1,19 @@
 import { Word } from "../domain/structure.js";
 import { DictionaryDB } from "../persistance/db/core.js";
 
-let lovefeeling = Word.Create("Noun", {
-    word: "love",
+let poland = Word.Create("Propernoun", {
+    word: "Poland",
     meaning: "Feeling"
 });
-let loveaction = Word.Create("Verb", {
-    word: "love",
-    meaning: "Deed"
+
+poland.Aliases.push({
+    Name: {English:"Poland",Polish:"Polska"},
+    Exists: true,
+    ExcludeFromWordChoice: false,
+    WordId: crypto.randomUUID()
 });
-await DictionaryDB.InsertToDB(DictionaryDB.PackMany(lovefeeling, loveaction));
+poland.Name.Polish = "Polska";
+await DictionaryDB.InsertToDB(DictionaryDB.Pack(poland));
 console.log("Inserted to db.");
-console.log(await DictionaryDB.Search({word:"love", pos:"Noun"}));
+console.log(await DictionaryDB.Search({word:"Polska", language:"Polish"}));
 console.log("Done.");
