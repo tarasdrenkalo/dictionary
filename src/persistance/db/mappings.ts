@@ -38,8 +38,8 @@ export interface DBLexemeCollection {
     Cases?:CaseStructure,
     CurrentCase?:keyof CaseStructure,
     Kind?:string,
-    Comparative?:i18n<string>,
-    Superlative?:i18n<string>,
+    Comparative?:WordReference,
+    Superlative?:WordReference,
     PersonPerspective:PersonPerspective;
 }
 

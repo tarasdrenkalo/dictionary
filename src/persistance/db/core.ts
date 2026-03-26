@@ -1,5 +1,5 @@
 import { Filter, MongoClient } from "mongodb";
-import { Word, PartOfSpeech, Verb, Participle, Noun, Adverb, Determiner, Conjunction, Pronoun, Preposition, Propernoun, Adjective } from "../../domain/structure.js";
+import { Word, PartOfSpeech, Verb, Participle, Noun, Adverb, Determiner, Conjunction, Pronoun, Preposition, Propernoun, Adjective, WordReference } from "../../domain/structure.js";
 import { DBModFlags, DBSEOFlags } from "./flags.js";
 import { DBWordsCollection, DBEditorialCollection, DBDefinitionsCollection, DBLexemeCollection, DBMorphemeCollection, DBCollections, InsertCollectionsToDB, DBFilters, DBSearchQuery } from "./mappings.js";
 import { Definition } from "../../domain/definition.js";
@@ -73,6 +73,18 @@ export class DictionaryDB {
         const NeedCases =
             w instanceof Adjective || w instanceof Noun ||
             w instanceof Pronoun || w instanceof Propernoun || w instanceof Propernoun;
+        let compref:WordReference = {
+            Name:w.Name,
+            ExcludeFromWordChoice:w.ExcludeFromWordChoice,
+            Exists:true,
+            WordId:crypto.randomUUID()
+        }
+        let supref:WordReference = {
+            Name:w.Name,
+            ExcludeFromWordChoice:w.ExcludeFromWordChoice,
+            Exists:true,
+            WordId:crypto.randomUUID()
+        }
         return {
             WordIds: [w.UniqueId],
             POS: w.POS,
@@ -80,12 +92,8 @@ export class DictionaryDB {
             PersonPerspective: w.PersonPerspective,
             Cases: NeedCases ? w.Cases : undefined,
             Kind: NeedKind ? w.Kind : undefined,
-            Comparative: (w instanceof Adjective || w instanceof Participle)
-                ? w.Comparative ?? { English: Adjective.CS(w.Name.English, true) }
-                : undefined,
-            Superlative: (w instanceof Adjective || w instanceof Participle)
-                ? w.Superlative ?? { English: Adjective.CS(w.Name.English, false) }
-                : undefined
+            Comparative: (w instanceof Adjective || w instanceof Participle) ? w.Comparative ?? compref : undefined,
+            Superlative: (w instanceof Adjective || w instanceof Participle) ? w.Superlative ?? supref : undefined
         };
     }
 
@@ -451,8 +459,8 @@ export class DictionaryDB {
             const IpaEntry = ipa.find(i => i.WordIds.includes(id));
             const edit = editorial.find(e => e.WordIds.includes(id));
             const word = Word.Create(lex.POS, {
-                word: wdoc.Word.English,
-                meaning: ""
+                word: wdoc.Word,
+                meaning: {English:""}
             });
             word.UniqueId = id;
             word.Name = wdoc.Word;

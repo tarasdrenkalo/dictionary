@@ -10,9 +10,9 @@ export type WordOptions = {
     isbiased?:boolean;
     connotation?:string;
     excludefromwordchoices?:boolean;
-    word:string;
+    word:i18n<string>;
     personperspective?:PersonPerspective;
-    meaning:string;
+    meaning:i18n<string>;
     gender?:Gender;
     ispropernoun?:boolean;
     isabbreviation?: boolean;
@@ -31,7 +31,6 @@ export type WordOptions = {
     category?:string;
     isparasitic?:boolean;
     sources?:Array<string>;
-    language?:keyof i18n<undefined>;
 }
 
 export type AdverbOptions = WordOptions & {

@@ -21,7 +21,7 @@ export interface GenericDefinition {
 }
 export interface DefinitionConstructiorOptions {
     versioning:number;
-    content:string;
+    content:i18n<string>;
     sources:Array<string>|null;
     creator:string;
     createdat:number|null;
@@ -42,7 +42,7 @@ export class Definition implements GenericDefinition {
         this.IsApproved = false;
         this.id = crypto.randomUUID();
         const current:VersionedDefinition = {
-            Content: {English:options?.content},
+            Content: options?.content,
             id:crypto.randomUUID(),
             Creator: options.creator,
             Sources: options.sources,

@@ -2,8 +2,9 @@ import { Word } from "../domain/structure.js";
 import { DictionaryDB } from "../persistance/db/core.js";
 
 let poland = Word.Create("Propernoun", {
-    word: "Poland",
-    meaning: "Feeling"
+    word: {English:"Poland",Polish:"Polska"},
+    meaning: {English:"Country in the Middle Europe", Polish:"Panstwo"},
+    kind:"Country",
 });
 
 poland.Aliases.push({

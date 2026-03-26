@@ -1,6 +1,6 @@
 import { i18n } from "../i18n/labels.js";
 import { CaseStructure, Cases } from "./cases.js";
-import { Definition } from "./definition.js";
+import { Definition, DefinitionConstructiorOptions } from "./definition.js";
 import { PersonPerspective, OptionsByPartOfSpeech, AdverbOptions, ConjunctionOptions, DeterminerOptions, PrepositionOptions, PronounOptions, WordOptions, NounOptions, VerbOptions, PropernounOptions } from "./options.js";
 import { TenseContainer, TenseType, Tense } from "./tense.js";
 import { Thesaurus } from "./thesaurus.js";
@@ -112,13 +112,14 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     Visible: boolean;
     Indexable: boolean;
     ExcludeFromWordChoice: boolean;
+    Connotation?: Definition;
     constructor(pos:T, options:OptionsByPartOfSpeech[keyof OptionsByPartOfSpeech]){
-        if(!options.word || options.word === "") throw "Eh, did you forget something?";
+        if(!options.word || typeof options.word === "undefined") throw "Eh, did you forget something?";
         let uid = crypto.randomUUID();
         this.Aliases = [];
         let selfref:WordReference = {
             ExcludeFromWordChoice: options.excludefromwordchoices || false,
-            Name: {English:options.word},
+            Name: options.word,
             Exists: true,
             WordId: uid,
         }
@@ -126,10 +127,10 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.IsRecordComplete = false;
         this.Exists = true;
         this.UniqueId = uid;
-        this.Name = {English:options.word};
+        this.Name = options.word;
         this.POS = pos;
-        this.Morpheme = {English:Morpheme.GetStructure(options.word)};
-        this.IPA = {English:Morpheme.Generate(options.word)};
+        this.Morpheme = {English:Morpheme.GetStructure(options.word.English)};
+        this.IPA = {English:Morpheme.Generate(options.word.English)};
         this.Gender = options.gender || "U";
         this.IsPropernoun = pos === "Propernoun";
         this.IsAbbreviation = options.isabbreviation ||false;
@@ -166,8 +167,8 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.Visible = false;
         this.Indexable = false;
         this.HasBias = options.isbiased || false;
+        this.IsRecordComplete = false;
     }
-    Connotation?: Definition;
     static Create<K extends keyof PartOfSpeech>(pos:K, options:OptionsByPartOfSpeech[K]):PartOfSpeech[K] {
         const Constructors:PartOfSpeech = {
             "Adjective":new Adjective("Adjective", options),
@@ -196,12 +197,61 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         }
         return wr;
     }
+    AddAlias(word:i18n<string>, c?:keyof CaseStructure, p?:boolean){
+        let wr:WordReference = {
+            Name:word,
+            Exists:true, 
+            ExcludeFromWordChoice:this.ExcludeFromWordChoice, 
+            WordId:crypto.randomUUID()
+        }
+        this.Aliases.push(wr);
+        if(typeof this.Cases !== "undefined" && c && p) this.Cases[c][p?"Plural":"Singular"] = wr;
+        return this;
+    }
+    TranslateMorpheme(l:keyof i18n<string>, m:MorphemeStructure){
+        this.Morpheme[l] = m;
+        return this;
+    }
+    TranslateDenotation(content:i18n<string>, ver:number, curr:boolean):this;
+    TranslateDenotation(content:i18n<string>, ver:string, curr:boolean):this;
+    TranslateDenotation(content:i18n<string>, ver:string|number, curr:boolean=true) {
+        let deftomodify = this.Denotation.Versions.filter((defs)=>defs[typeof ver === "string" ? "id":"VersionNumber"]);
+        deftomodify.forEach((def)=>{
+            def.Content=content;
+            if(curr) this.Denotation.Current = def;
+        });
+        this.Denotation.LastModifiedAt = Date.now();
+        return this;
+    }
+    TranslateConnotation(content:i18n<string>, ver:number, curr:boolean):this;
+    TranslateConnotation(content:i18n<string>, ver:string, curr:boolean):this;
+    TranslateConnotation(content:i18n<string>, ver:string|number, curr:boolean=true) {
+        let conn:Definition = this.Connotation ?? new Definition({
+            content:content,
+            versioning:1,
+            createdat:Date.now(),
+            sources:null,
+            creator:"",
+            lastmodified:Date.now()
+        });
+        let deftomodify = conn.Versions.filter((defs)=>defs[typeof ver === "string" ? "id":"VersionNumber"]);
+        deftomodify.forEach((def)=>{
+            def.Content=content;
+            if(curr) conn.Current = def;
+        });
+        conn.LastModifiedAt = Date.now();
+        return this;
+    }
+    AddContexts(...contexts:WordReference[]){
+        this.Contexts.push(...contexts);
+        return this;
+    }
 }
 export class Interjection extends Word<"Interjection"> {}
 export class Exclamation extends Word<"Exclamation"> {}
 export class Adjective extends Word<"Adjective"> {
-    Comparative?:i18n<string>;
-    Superlative?:i18n<string>;
+    Comparative?:WordReference;
+    Superlative?:WordReference;
     public static CS(w:string, s:boolean):string{
         if(w.endsWith("e")){
             return w + (s ? "r" : "st");
@@ -222,8 +272,23 @@ export class Adjective extends Word<"Adjective"> {
     }
     constructor(pos:"Adjective",options:WordOptions) {
         super(pos, options);
-        this.Comparative = {English:Adjective.CS(options.word.toLowerCase(), true)}
-        this.Superlative = {English:Adjective.CS(options.word.toLowerCase(), false)}
+        let comp = {English:Adjective.CS(options.word.English.toLowerCase(), true)};
+        let sup = {English:Adjective.CS(options.word.English.toLowerCase(), false)};
+        let compref:WordReference = {
+            Name:comp,
+            ExcludeFromWordChoice:this.ExcludeFromWordChoice,
+            Exists:true,
+            WordId:crypto.randomUUID()
+        }
+        let supref:WordReference = {
+            Name:sup,
+            ExcludeFromWordChoice:this.ExcludeFromWordChoice,
+            Exists:true,
+            WordId:crypto.randomUUID()
+        }
+        this.Comparative = compref
+        this.Superlative = supref
+        this.Aliases.push(compref, supref);
     }
 }
 export class Adverb extends Word<"Adverb">{
@@ -255,8 +320,8 @@ export class Noun extends Word<"Noun"> {
     IsPluralOnly:boolean;
     constructor(pos:"Noun",options:NounOptions){
         super(pos, options);
-        this.IsSingular = !options.word.endsWith("s");
-        this.IsPlural = options.word.endsWith("s");
+        this.IsSingular = !options.word.English.endsWith("s");
+        this.IsPlural = options.word.English.endsWith("s");
         this.IsCountable = options.iscountable||true;
         this.IsSingularOnly = options.singleonly||false;
         this.IsPluralOnly = options.pluralonly||false;
@@ -289,14 +354,30 @@ export class Verb extends Word<"Verb">{
 export class Participle extends Word<"Participle"> {
     IsTransitive:boolean;
     IsActive:boolean;
-    Comparative?:i18n<string>;
-    Superlative?:i18n<string>;
+    Comparative?:WordReference;
+    Superlative?:WordReference;
     constructor(pos:"Participle",options:VerbOptions){
         super(pos, options);
         this.IsTransitive = options.istransitive||true;
         this.IsActive = options.isactive||true;
-        this.Comparative = {English:Adjective.CS(this.Name.English, true)}
-        this.Superlative = {English:Adjective.CS(this.Name.English, false)}
+        super(pos, options);
+        let comp = {English:Adjective.CS(options.word.English.toLowerCase(), true)};
+        let sup = {English:Adjective.CS(options.word.English.toLowerCase(), false)};
+        let compref:WordReference = {
+            Name:comp,
+            ExcludeFromWordChoice:this.ExcludeFromWordChoice,
+            Exists:true,
+            WordId:crypto.randomUUID()
+        }
+        let supref:WordReference = {
+            Name:sup,
+            ExcludeFromWordChoice:this.ExcludeFromWordChoice,
+            Exists:true,
+            WordId:crypto.randomUUID()
+        }
+        this.Comparative = compref
+        this.Superlative = supref
+        this.Aliases.push(compref, supref);
     }
 }
 export class Pronoun extends Word<"Pronoun"> {
