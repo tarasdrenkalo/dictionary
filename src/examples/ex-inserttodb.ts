@@ -6,14 +6,7 @@ let poland = Word.Create("Propernoun", {
     meaning: {English:"Country in the Middle Europe", Polish:"Panstwo"},
     kind:"Country",
 });
-
-poland.Aliases.push({
-    Name: {English:"Poland",Polish:"Polska"},
-    Exists: true,
-    ExcludeFromWordChoice: false,
-    WordId: crypto.randomUUID()
-});
-poland.Name.Polish = "Polska";
+poland.AddAlias({English:"Polandia", Polish:"Polski"}, "Nominative");
 await DictionaryDB.InsertToDB(DictionaryDB.Pack(poland));
 console.log("Inserted to db.");
 console.log(await DictionaryDB.Search({word:"Polska", language:"Polish"}));

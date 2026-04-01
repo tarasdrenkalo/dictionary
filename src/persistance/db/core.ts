@@ -3,6 +3,7 @@ import { Word, PartOfSpeech, Verb, Participle, Noun, Adverb, Determiner, Conjunc
 import { DBModFlags, DBSEOFlags } from "./flags.js";
 import { DBWordsCollection, DBEditorialCollection, DBDefinitionsCollection, DBLexemeCollection, DBMorphemeCollection, DBCollections, InsertCollectionsToDB, DBFilters, DBSearchQuery } from "./mappings.js";
 import { Definition } from "../../domain/definition.js";
+import { AdverbVariant, ConjunctionVariant, DeterminerVariant, PronounVariant } from "../../domain/variants.js";
 
 export class DictionaryDB {
     private static MDBClient = new MongoClient(
@@ -170,8 +171,6 @@ export class DictionaryDB {
         for (const w of words) {
             const p = this.PackOne(w);
             out.Word.push(p.Word);
-
-            // IPA merge
             const ipaKey = JSON.stringify({
                 IPA: p.IPA.IPA ?? null,
                 Morpheme: p.IPA.Morpheme ?? null
@@ -182,8 +181,6 @@ export class DictionaryDB {
             } else {
                 IpaMap.set(ipaKey, { ...p.IPA });
             }
-
-            // Lexeme merge
             const lexKey = this.LexemeFingerprint(p.Lexeme);
             const lexExisting = LexMap.get(lexKey);
             if (lexExisting) {
@@ -191,8 +188,6 @@ export class DictionaryDB {
             } else {
                 LexMap.set(lexKey, { ...p.Lexeme });
             }
-
-            // Definition merge (grouped by denotation+connotation)
             const defKey = this.DefinitionFingerprint(p.Definition);
             const defExisting = DefMap.get(defKey);
             if (defExisting) {
@@ -200,8 +195,6 @@ export class DictionaryDB {
             } else {
                 DefMap.set(defKey, { ...p.Definition });
             }
-
-            // Editorial merge (grouped by flags+SEO)
             const editKey = this.EditorialFingerprint(p.Editorial);
             const editExisting = EditMap.get(editKey);
             if (editExisting) {
@@ -351,38 +344,28 @@ export class DictionaryDB {
                 ).map(d => d.WordId)
             );
             const ValidIdArray = [...ValidIds];
+            const UpdateCmds = [
+                {
+                    updateMany:{
+                        filter:{},
+                        update:{ $pull: { Aliases: { WordId: { $nin: ValidIdArray } } } }
+                    }
+                },
+                {
+                    deleteMany: {
+                        filter:{WordIds: { $size: 0 }}
+                    }
+                }
+            ]
+
             await DictionaryDB.MDBWordsColl.updateMany(
                 {},
                 { $pull: { Aliases: { WordId: { $nin: ValidIdArray } } } }
             );
-            await DictionaryDB.MDBDefColl.updateMany(
-                {},
-                { $pull: { WordIds: { $nin: ValidIdArray } } }
-            );
-            await DictionaryDB.MDBDefColl.deleteMany({
-                WordIds: { $size: 0 }
-            });
-            await DictionaryDB.MDBEditColl.updateMany(
-                {},
-                { $pull: { WordIds: { $nin: ValidIdArray } } }
-            );
-            await DictionaryDB.MDBEditColl.deleteMany({
-                WordIds: { $size: 0 }
-            });
-            await DictionaryDB.MDBLexColl.updateMany(
-                {},
-                { $pull: { WordIds: { $nin: ValidIdArray } } }
-            );
-            await DictionaryDB.MDBLexColl.deleteMany({
-                WordIds: { $size: 0 }
-            });
-            await DictionaryDB.MDBIPAColl.updateMany(
-                {},
-                { $pull: { WordIds: { $nin: ValidIdArray } } }
-            );
-            await DictionaryDB.MDBIPAColl.deleteMany({
-                WordIds: { $size: 0 }
-            });
+            await DictionaryDB.MDBDefColl.bulkWrite(UpdateCmds)
+            await DictionaryDB.MDBEditColl.bulkWrite(UpdateCmds)
+            await DictionaryDB.MDBLexColl.bulkWrite(UpdateCmds)
+            await DictionaryDB.MDBIPAColl.bulkWrite(UpdateCmds)
         } finally {
             await DictionaryDB.MDBClient.close();
         }
@@ -508,6 +491,18 @@ export class DictionaryDB {
             }
             word.Gender = lex.Gender;
             word.PersonPerspective = lex.PersonPerspective;
+            const needskind = word instanceof Adverb || word instanceof Determiner || word instanceof Conjunction
+             || word instanceof Pronoun || word instanceof Noun || word instanceof Propernoun;
+            if(needskind) {
+                if(word instanceof Adverb) word.Kind = lex.Kind as AdverbVariant || "Undetermined";
+                if(word instanceof Determiner) word.Kind = lex.Kind as DeterminerVariant || "Undetermined";
+                if(word instanceof Conjunction) word.Kind = lex.Kind as ConjunctionVariant || "Undetermined";
+                //if(word instanceof Verb) word.Kind = lex.Kind
+                if(word instanceof Pronoun) word.Kind = lex.Kind as PronounVariant || "Undetermined";
+                //if(word instanceof Noun) word.Kind = lex.Kind
+                if(word instanceof Propernoun) word.Kind = lex.Kind || "Undetermined";
+            }
+            //word.Kind = lex.Kind
             result.push(word);
         }
         await db.client.close();

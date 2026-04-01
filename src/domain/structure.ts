@@ -1,8 +1,8 @@
-import { i18n } from "../i18n/labels.js";
+import { i18n, Languages } from "../i18n/labels.js";
 import { CaseStructure, Cases } from "./cases.js";
 import { Definition, DefinitionConstructiorOptions } from "./definition.js";
 import { PersonPerspective, OptionsByPartOfSpeech, AdverbOptions, ConjunctionOptions, DeterminerOptions, PrepositionOptions, PronounOptions, WordOptions, NounOptions, VerbOptions, PropernounOptions } from "./options.js";
-import { TenseContainer, TenseType, Tense } from "./tense.js";
+import { TenseContainer, TenseTime, Tense } from "./tense.js";
 import { Thesaurus } from "./thesaurus.js";
 import { Grapheme } from "./utils/grapheme.js";
 import { Morpheme, MorphemeStructure } from "./utils/morpheme.js";
@@ -62,12 +62,12 @@ export interface BaseWord extends UnitWord {
     UniqueId:string;
     POS:keyof PartOfSpeech;
     Morpheme:i18n<MorphemeStructure>;
-    IPA:i18n<Grapheme[]>;
+    IPA:i18n<Grapheme<Languages>[]>;
     Gender:Gender;
     Denotation:Definition;
     Thesaurus:Thesaurus;
     Tenses?:TenseContainer;
-    CurrentTense?:TenseType;
+    CurrentTense?:TenseTime;
     PersonPerspective:PersonPerspective;
     Euphemisms:Array<WordReference>;
     Cases?:CaseStructure;
@@ -84,7 +84,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     Aliases: WordReference[];
     POS:T;
     Morpheme: i18n<MorphemeStructure>;
-    IPA: i18n<Grapheme[]>;
+    IPA: i18n<Grapheme<Languages>[]>;
     Gender: Gender;
     IsPropernoun: boolean;
     IsAbbreviation: boolean;
@@ -99,7 +99,7 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     Denotation: Definition;
     Thesaurus: Thesaurus;
     Tenses?: TenseContainer;
-    CurrentTense?:TenseType;
+    CurrentTense?:TenseTime;
     PersonPerspective: PersonPerspective;
     Euphemisms: Array<WordReference>;
     Cases?: CaseStructure;
@@ -152,10 +152,10 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         });
         this.Connotation = undefined;
         this.Thesaurus = {};
-        this.Tenses = (pos === "Verb" || pos === "Participle") ? Tense.BuildAll(this.Name.English):undefined;
-        this.CurrentTense = "Present Simple";
+        this.Tenses = (pos === "Verb" || pos === "Participle") ? Tense.EnglishAll(this.Name.English):undefined;
+        this.CurrentTense = "Present";
         this.PersonPerspective = options.personperspective||0;
-        this.Cases = (pos === "Noun"||pos === "Pronoun" || pos==="Propernoun"||pos==="Adjective") ? Cases.All(selfref) : undefined;
+        this.Cases = (pos === "Noun"||pos === "Pronoun" || pos==="Propernoun"||pos==="Adjective") ? Cases.English(selfref) : undefined;
         this.Euphemisms = options.euphemisms||[];
         this.CurrentCase = options.case||"Nominative";
         this.IsArchaic = options.isarchaic||false;
@@ -360,7 +360,6 @@ export class Participle extends Word<"Participle"> {
         super(pos, options);
         this.IsTransitive = options.istransitive||true;
         this.IsActive = options.isactive||true;
-        super(pos, options);
         let comp = {English:Adjective.CS(options.word.English.toLowerCase(), true)};
         let sup = {English:Adjective.CS(options.word.English.toLowerCase(), false)};
         let compref:WordReference = {

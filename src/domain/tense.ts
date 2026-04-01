@@ -1,209 +1,99 @@
 import { i18n } from "../i18n/labels.js";
-import { Gerund } from "./utils/gerund.js";
-import { Morpheme } from "./utils/morpheme.js";
+import { English, EnglishDialect } from "../langs/english.js";
+import { PersonPerspective } from "./options.js";
 
+export type TenseTime = "Present" | "Past" | "Future";
 
-
-export type TenseTime = "Present"|"Past"|"Future";
-export type TenseType = "Present Simple"|"Present Progressive"|"Present Participle"|"Present Perfect"|
-"Past Simple"|"Past Progressive"|"Past Participle"|"Past Perfect"|
-"Future Simple"|"Future Progressive"|"Future Participle"|"Future Perfect";
 export interface TenseStructure {
-  UK:{
-    1:{
-      Singular:i18n<string>,
-      Plural:i18n<string>,
-    },
-    2:{
-      Singular:i18n<string>,
-      Plural:i18n<string>,
-    },
-    3:{
-      Singular:i18n<string>,
-      Plural:i18n<string>,
-    },
-  },
-  US:{
-    1:{
-      Singular:i18n<string>,
-      Plural:i18n<string>,
-    },
-    2:{
-      Singular:i18n<string>,
-      Plural:i18n<string>,
-    },
-    3:{
-      Singular:i18n<string>,
-      Plural:i18n<string>,
-    },
-  }
+    1: { Singular: i18n<string>; Plural: i18n<string> };
+    2: { Singular: i18n<string>; Plural: i18n<string> };
+    3: { Singular: i18n<string>; Plural: i18n<string> };
 }
+
 export interface TenseTimed {
-  Simple:TenseStructure,
-  Progressive:TenseStructure,
-  Participle:TenseStructure,
-  Perfect:TenseStructure,
+    Simple: TenseStructure;
+    Progressive: TenseStructure;
+    Participle: TenseStructure;
+    Perfect: TenseStructure;
 }
+
 export interface TenseContainer {
-  Present:TenseTimed,
-  Past:TenseTimed,
-  Future:TenseTimed
+    Present: TenseTimed;
+    Past: TenseTimed;
+    Future: TenseTimed;
 }
+
 export class Tense {
-  static Build(w: string, t: TenseTime): TenseTimed {
-    const schema = Morpheme.GetStructure(w).Schema;
-    const [gbing, using] = Gerund.ing(w);
-    const [gbed, used] = Gerund.ed(w);
-    const [gbedParticiple, usedParticiple] = Gerund.ed(w, true);
+    private static BuildStructure(
+        forms: (person: Exclude<PersonPerspective, 0>, plural: boolean) => string
+    ): TenseStructure {
+        return {
+            1: {
+                Singular: { English: forms(1, false) },
+                Plural: { English: forms(1, true) },
+            },
+            2: {
+                Singular: { English: forms(2, false) },
+                Plural: { English: forms(2, true) },
+            },
+            3: {
+                Singular: { English: forms(3, false) },
+                Plural: { English: forms(3, true) },
+            },
+        };
+    }
+    static English(w: string, t: TenseTime, d: EnglishDialect = "GB"): TenseTimed {
+        const gerund = new English().Gerund;
 
-    let end: string;
-    if (w.endsWith("s")) end = w + "es";
-    else if (schema.endsWith("cv") && w.endsWith("y"))
-      end = w.slice(0, -1) + "ies";
-    else end = w + "s";
+        const ing = gerund.ing(w, d);
+        const ed_past = gerund.ed(w, d, false);
+        const ed_participle = gerund.ed(w, d, true);
 
-    const AuxBe =
-      t === "Present"
-        ? ["am", "is", "is", "are"]
-        : t === "Past"
-        ? ["was", "was", "was", "were"]
-        : ["will be", "will be", "will be", "will be"];
+        let third: string;
+        if (w.endsWith("s")) third = w + "es";
+        else if (w.endsWith("y") && !"aeiou".includes(w.at(-2)!))
+        third = w.slice(0, -1) + "ies";
+        else third = w + "s";
 
-    const AuxHave =
-      t === "Present"
-        ? ["have", "has"]
-        : t === "Past"
-        ? ["had", "had"]
-        : ["will have", "will have"];
+        const be = {
+        Present: ["am", "are", "is", "are"],
+        Past: ["was", "were", "was", "were"],
+        Future: ["will be", "will be", "will be", "will be"],
+        }[t];
 
-    const SimpleBG =
-      t === "Past" ? gbed : t === "Future" ? `will ${w}` : w;
+        const have = {
+        Present: ["have", "have", "has"],
+        Past: ["had", "had", "had"],
+        Future: ["will have", "will have", "will have"],
+        }[t];
 
-    const SimpleUS =
-      t === "Past" ? used : t === "Future" ? `will ${w}` : w;
+        const simpleBase =
+        t === "Past" ? ed_past : t === "Future" ? `will ${w}` : w;
 
-    return {
-      Simple: {
-        UK: {
-          1: {
-            Singular: {English:SimpleBG||""},
-            Plural: {English:SimpleBG||""},
-          },
-          2: {
-            Singular: {English:SimpleBG||""},
-            Plural: {English:SimpleBG||""},
-          },
-          3: {
-            Singular:{English:(t === "Past"
-                ? gbed
-                : t === "Future"
-                ? `will ${w}`
-                : end)||""},
-              
-            Plural: {English:SimpleBG||""},
-          },
-        },
-        US: {
-          1: {
-            Singular: {English:SimpleUS||""},
-            Plural: {English:SimpleUS||""},
-          },
-          2: {
-            Singular: {English:SimpleUS||""},
-            Plural: {English:SimpleUS||""},
-          },
-          3: {
-            Singular:{English:(t === "Past"
-                ? used
-                : t === "Future"
-                ? `will ${w}`
-                : end)||""},
-            Plural: {English:SimpleUS||""},
-          },
-        },
-      },
+        return {
+        Simple: this.BuildStructure((p, plural) => {
+            if (t === "Present" && p === 3 && !plural) return third;
+            return simpleBase;
+        }),
 
-      Progressive: {
-        UK: {
-          1: {
-            Singular: {English:`${AuxBe[0]} ${gbing}`},
-            Plural: {English:`${AuxBe[3]} ${gbing}`},
-          },
-          2: {
-            Singular: {English:`${AuxBe[1]} ${gbing}`},
-            Plural: {English:`${AuxBe[3]} ${gbing}`},
-          },
-          3: {
-            Singular: {English:`${AuxBe[2]} ${gbing}`},
-            Plural: {English:`${AuxBe[3]} ${gbing}`},
-          },
-        },
-        US: {
-          1: {
-            Singular: {English:`${AuxBe[0]} ${using}`},
-            Plural: {English:`${AuxBe[3]} ${using}`},
-          },
-          2: {
-            Singular: {English:`${AuxBe[1]} ${using}`},
-            Plural: {English:`${AuxBe[3]} ${using}`},
-          },
-          3: {
-            Singular: {English:`${AuxBe[2]} ${using}`},
-            Plural: {English:`${AuxBe[3]} ${using}`},
-          },
-        },
-      },
+        Progressive: this.BuildStructure((p, plural) => {
+            const aux = plural ? be[3] : be[p - 1];
+            return `${aux} ${ing}`;
+        }),
 
-      Participle: {
-        UK: {
-          1: { Singular: {English:gbedParticiple||""}, Plural: {English:gbedParticiple||""}},
-          2: { Singular: {English:gbedParticiple||""}, Plural: {English:gbedParticiple||""}},
-          3: { Singular: {English:gbedParticiple||""}, Plural: {English:gbedParticiple||""}},
-        },
-        US: {
-          1: { Singular: {English:usedParticiple||""}, Plural: {English:usedParticiple||""}},
-          2: { Singular: {English:usedParticiple||""}, Plural: {English:usedParticiple||""}},
-          3: { Singular: {English:usedParticiple||""}, Plural: {English:usedParticiple||""}},
-        },
-      },
-      Perfect: {
-        UK: {
-          1: {
-            Singular: {English:`${AuxHave[0]} ${gbedParticiple}`},
-            Plural: {English:`${AuxHave[0]} ${gbedParticiple}`},
-          },
-          2: {
-            Singular: {English:`${AuxHave[1]} ${gbedParticiple}`},
-            Plural: {English:`${AuxHave[0]} ${gbedParticiple}`},
-          },
-          3: {
-            Singular: {English:`${AuxHave[1]} ${gbedParticiple}`},
-            Plural: {English:`${AuxHave[1]} ${gbedParticiple}`},
-          },
-        },
-        US: {
-          1: {
-            Singular: {English:`${AuxHave[0]} ${usedParticiple}`},
-            Plural: {English:`${AuxHave[0]} ${usedParticiple}`},
-          },
-          2: {
-            Singular: {English:`${AuxHave[1]} ${usedParticiple}`},
-            Plural: {English:`${AuxHave[0]} ${usedParticiple}`},
-          },
-          3: {
-            Singular: {English:`${AuxHave[1]} ${usedParticiple}`},
-            Plural: {English:`${AuxHave[0]} ${usedParticiple}`},
-          },
-        },
-      },
-    };
-  }
-  static BuildAll(w:string):TenseContainer{
-    const Result:TenseContainer = {
-      Present: Tense.Build(w, "Present"),
-      Past: Tense.Build(w, "Past"),
-      Future: Tense.Build(w, "Future"),
-    };
-    return Result;
-  }
+        Participle: this.BuildStructure(() => ed_participle),
+
+        Perfect: this.BuildStructure((p, plural) => {
+            const aux = plural ? have[0] : have[p - 1];
+            return `${aux} ${ed_participle}`;
+        }),
+        };
+    }
+    static EnglishAll(w: string, d: EnglishDialect = "GB"): TenseContainer {
+        return {
+            Present: this.English(w, "Present", d),
+            Past: this.English(w, "Past", d),
+            Future: this.English(w, "Future", d),
+        };
+    }
 }

@@ -2,7 +2,7 @@
 import { i18n } from "../i18n/labels.js";
 import { CaseStructure } from "./cases.js";
 import { WordReference } from "./structure.js";
-import { TenseType } from "./tense.js";
+import { TenseTime } from "./tense.js";
 import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
 export type PersonPerspective = 0|1|2|3;
 export type WordOptions = {
@@ -53,7 +53,8 @@ export type NounOptions = WordOptions & {
 export type VerbOptions = WordOptions & {
     istransitive?:boolean;
     isactive?:boolean;
-    currentense?:TenseType;
+    currentense?:TenseTime;
+    kind?:string;
 }
 export type PronounOptions = WordOptions & {
     kind?:PronounVariant;

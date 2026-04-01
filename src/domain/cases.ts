@@ -14,7 +14,7 @@ export interface CaseStructure {
     Vocative:CasePlurality
 }
 export class Cases {
-    static All(word:WordReference):CaseStructure{
+    static English(word:WordReference):CaseStructure{
         return {
             Nominative:{Singular:word, Plural:word},
             Genitive:{Singular:word, Plural:word},

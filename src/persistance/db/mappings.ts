@@ -7,7 +7,7 @@ import { Thesaurus } from "../../domain/thesaurus.js";
 import { Grapheme } from "../../domain/utils/grapheme.js";
 import { MorphemeStructure } from "../../domain/utils/morpheme.js";
 import { Gender } from "../../domain/variants.js";
-import { i18n } from "../../i18n/labels.js";
+import { i18n, Languages } from "../../i18n/labels.js";
 import { DBModFlags, DBSEOFlags } from "./flags.js";
 export interface DBWordsCollection {
     WordId:string;
@@ -17,7 +17,7 @@ export interface DBWordsCollection {
 }
 export interface DBMorphemeCollection {
     WordIds:Array<string>,
-    IPA:i18n<Grapheme[]>,
+    IPA:i18n<Grapheme<Languages>[]>,
     Morpheme:i18n<MorphemeStructure>,
 }
 export interface DBDefinitionsCollection {
@@ -58,7 +58,7 @@ export interface DBSearchQuery {
     pos?: keyof PartOfSpeech;
     gender?: Gender;
     kind?: string;
-    ipa?: Grapheme[];
+    ipa?: Grapheme<Languages>[];
     flags?: DBModFlags[];
     seo?: DBSEOFlags[];
     language?: keyof i18n<undefined>;

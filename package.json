@@ -8,7 +8,8 @@
     "build": "tsc",
     "stop": "npm unlink -g dictionary",
     "test-create": "node ./build/examples/ex-inserttodb.js",
-    "test-delete": "node ./build/examples/ex-deletefromdb.js"
+    "test-delete": "node ./build/examples/ex-deletefromdb.js",
+    "test-grapheme":"node ./build/examples/ex-grapheme.js"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",

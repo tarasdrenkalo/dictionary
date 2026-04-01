@@ -1,12 +1,18 @@
 import { CasePlurality, CaseStructure } from "../domain/cases.js";
 import { PartOfSpeech } from "../domain/structure.js";
-import { TenseTime, TenseType } from "../domain/tense.js";
+import { TenseTime } from "../domain/tense.js";
 import { Thesaurus } from "../domain/thesaurus.js";
 import { Gender } from "../domain/variants.js";
+import { English } from "../langs/english.js";
 export interface i18n<T> {
     English:T;
     Polish?:T;
 }
+export interface LanguageInstance {
+    English:English;
+    //Polish:Polish;
+}
+export type Languages = keyof i18n<any>;
 export const i18nPartOfSpeech: Record<keyof PartOfSpeech, i18n<string>> = {
     Adjective: { English: "Adjective", Polish: "Przymiotnik" },
     Adverb: { English: "Adverb", Polish: "Przysłówek" },
@@ -49,20 +55,6 @@ export const i18nTenseTime: Record<TenseTime, i18n<string>> = {
     Present: { English: "Present", Polish: "Czas teraźniejszy" },
     Past: { English: "Past", Polish: "Czas przeszły" },
     Future: { English: "Future", Polish: "Czas przyszły" },
-}
-export const i18nTenseType: Record<TenseType, i18n<string>> = {
-    "Present Simple": { English: "Present Simple", Polish: "Czas teraźniejszy prosty" },
-    "Present Progressive": { English: "Present Progressive", Polish: "Czas teraźniejszy ciągły" },
-    "Present Participle": { English: "Present Participle", Polish: "Imiesłów czasu teraźniejszego" },
-    "Present Perfect": { English: "Present Perfect", Polish: "Czas teraźniejszy dokonany" },
-    "Past Simple": { English: "Past Simple", Polish: "Czas przeszły prosty" },
-    "Past Progressive": { English: "Past Progressive", Polish: "Czas przeszły ciągły" },
-    "Past Participle": { English: "Past Participle", Polish: "Imiesłów czasu przeszłego" },
-    "Past Perfect": { English: "Past Perfect", Polish: "Czas zaprzeszły" },
-    "Future Simple": { English: "Future Simple", Polish: "Czas przyszły prosty" },
-    "Future Progressive": { English: "Future Progressive", Polish: "Czas przyszły ciągły" },
-    "Future Participle": { English: "Future Participle", Polish: "Imiesłów czasu przyszłego" },
-    "Future Perfect": { English: "Future Perfect", Polish: "Czas przyszły dokonany" },
 }
 export const i18nGender: Record<Gender, i18n<string>> = {
     M: {English:"M", Polish:"M"},

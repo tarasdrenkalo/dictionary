@@ -1,4 +1,5 @@
-import { i18n } from "../../i18n/labels.js";
+import { i18n, Languages } from "../../i18n/labels.js";
+import { GraphemeSpelling } from "./grapheme.js";
 
 export interface Letter {
     // --- A family ---
@@ -12,7 +13,7 @@ export interface Letter {
     /** Latin small letter a with caron (ǎ) */ A_HACEK:"ǎ",
 
     // --- B ---
-    /** Latin small letter b */ B:"b",
+    /** Latin small letter b */ B: "b",
 
     // --- C family ---
     /** Latin small letter c */ C:"c",
@@ -180,31 +181,13 @@ export interface Letter {
     /** Cyrillic small letter yu (ю) */ CYRILLIC_YU:"ю",
     /** Cyrillic small letter ya (я) */ CYRILLIC_YA:"я"
 }
-export interface Language {
-    Name:keyof i18n<string>,
+export interface Language<L extends Languages> {
+    Name:L;
     GetLetters(): Array<keyof Letter>;
     HasLetter(l: keyof Letter): boolean;
     GetOrderByLetter(l: keyof Letter): number|undefined;
     GetLetterByOrder(n: number): keyof Letter|undefined;
-}
-export const English:Language = {
-    Name:"English",
-    GetLetters() {
-        return ["A","B","C","D","E",
-            "F","G","H","I","J","K","L",
-        "M","N","O","P","Q","R","S","T",
-        "U","V","W","X","Y","Z"];
-    },
-    HasLetter(l:keyof Letter) {
-        return l in this.GetLetters();
-    },
-    GetLetterByOrder(n:number) {
-        const l =  this.GetLetters()[n];
-        return typeof l !=="undefined" ? l : void l;
-    },
-    GetOrderByLetter(l:keyof Letter): number|undefined {
-        const assert = l in this.GetLetters();
-        if(!assert) return void l;
-        return this.GetLetters().indexOf(l);
-    }
+    readonly GRAPHEME_REGEX:RegExp;
+    readonly VOWELS:Array<keyof Letter>;
+    //readonly VOWEL_IPA;
 }
