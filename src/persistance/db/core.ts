@@ -1,9 +1,10 @@
-import { Filter, MongoClient } from "mongodb";
+import { AnyBulkWriteOperation, Filter, MongoClient } from "mongodb";
 import { Word, PartOfSpeech, Verb, Participle, Noun, Adverb, Determiner, Conjunction, Pronoun, Preposition, Propernoun, Adjective, WordReference } from "../../domain/structure.js";
 import { DBModFlags, DBSEOFlags } from "./flags.js";
 import { DBWordsCollection, DBEditorialCollection, DBDefinitionsCollection, DBLexemeCollection, DBMorphemeCollection, DBCollections, InsertCollectionsToDB, DBFilters, DBSearchQuery } from "./mappings.js";
 import { Definition } from "../../domain/definition.js";
 import { AdverbVariant, ConjunctionVariant, DeterminerVariant, PronounVariant } from "../../domain/variants.js";
+import { CasePlurality, CaseStructure } from "../../domain/cases.js";
 
 export class DictionaryDB {
     private static MDBClient = new MongoClient(
@@ -65,7 +66,7 @@ export class DictionaryDB {
         return s;
     }
 
-    private static buildLexeme(w: Word<keyof PartOfSpeech>): DBLexemeCollection {
+    private static BuildLexeme(w: Word<keyof PartOfSpeech>): DBLexemeCollection {
         const NeedKind =
             w instanceof Adverb || w instanceof Determiner ||
             w instanceof Conjunction || w instanceof Pronoun ||
@@ -73,7 +74,7 @@ export class DictionaryDB {
 
         const NeedCases =
             w instanceof Adjective || w instanceof Noun ||
-            w instanceof Pronoun || w instanceof Propernoun || w instanceof Propernoun;
+            w instanceof Pronoun || w instanceof Propernoun;
         let compref:WordReference = {
             Name:w.Name,
             ExcludeFromWordChoice:w.ExcludeFromWordChoice,
@@ -131,6 +132,7 @@ export class DictionaryDB {
 
         return {
             Word: {
+                Normalised:w.Normalised,
                 WordId: w.UniqueId,
                 Word: w.Name,
                 Aliases: w.Aliases
@@ -145,7 +147,7 @@ export class DictionaryDB {
                 IPA: w.IPA,
                 Morpheme: w.Morpheme
             },
-            Lexeme: this.buildLexeme(w),
+            Lexeme: this.BuildLexeme(w),
             Editorial: {
                 WordIds: wordIds,
                 Flags: [...flags],
@@ -171,36 +173,36 @@ export class DictionaryDB {
         for (const w of words) {
             const p = this.PackOne(w);
             out.Word.push(p.Word);
-            const ipaKey = JSON.stringify({
+            const IpaKey = JSON.stringify({
                 IPA: p.IPA.IPA ?? null,
                 Morpheme: p.IPA.Morpheme ?? null
             });
-            const ipaExisting = IpaMap.get(ipaKey);
-            if (ipaExisting) {
-                ipaExisting.WordIds.push(...p.IPA.WordIds);
+            const IpaExisting = IpaMap.get(IpaKey);
+            if (IpaExisting) {
+                IpaExisting.WordIds.push(...p.IPA.WordIds);
             } else {
-                IpaMap.set(ipaKey, { ...p.IPA });
+                IpaMap.set(IpaKey, { ...p.IPA });
             }
-            const lexKey = this.LexemeFingerprint(p.Lexeme);
-            const lexExisting = LexMap.get(lexKey);
-            if (lexExisting) {
-                lexExisting.WordIds.push(...p.Lexeme.WordIds);
+            const LexKey = this.LexemeFingerprint(p.Lexeme);
+            const LexExisting = LexMap.get(LexKey);
+            if (LexExisting) {
+                LexExisting.WordIds.push(...p.Lexeme.WordIds);
             } else {
-                LexMap.set(lexKey, { ...p.Lexeme });
+                LexMap.set(LexKey, { ...p.Lexeme });
             }
-            const defKey = this.DefinitionFingerprint(p.Definition);
-            const defExisting = DefMap.get(defKey);
+            const DefKey = this.DefinitionFingerprint(p.Definition);
+            const defExisting = DefMap.get(DefKey);
             if (defExisting) {
                 defExisting.WordIds.push(...p.Definition.WordIds);
             } else {
-                DefMap.set(defKey, { ...p.Definition });
+                DefMap.set(DefKey, { ...p.Definition });
             }
-            const editKey = this.EditorialFingerprint(p.Editorial);
-            const editExisting = EditMap.get(editKey);
-            if (editExisting) {
-                editExisting.WordIds.push(...p.Editorial.WordIds);
+            const EditKey = this.EditorialFingerprint(p.Editorial);
+            const EditExisting = EditMap.get(EditKey);
+            if (EditExisting) {
+                EditExisting.WordIds.push(...p.Editorial.WordIds);
             } else {
-                EditMap.set(editKey, { ...p.Editorial });
+                EditMap.set(EditKey, { ...p.Editorial });
             }
         }
         out.IPA = [...IpaMap.values()].map(i => ({
@@ -242,6 +244,7 @@ export class DictionaryDB {
                     $setOnInsert: {
                         WordId: w.WordId,
                         Word: w.Word,
+                        Normalised:w.Normalised,
                         Thesaurus: w.Thesaurus
                     },
                     $addToSet: { Aliases: { $each: w.Aliases ?? [] } }
@@ -348,7 +351,7 @@ export class DictionaryDB {
                 {
                     updateMany:{
                         filter:{},
-                        update:{ $pull: { Aliases: { WordId: { $nin: ValidIdArray } } } }
+                        update:{ $pull: { WordIds: { $nin: ValidIdArray } } }
                     }
                 },
                 {
@@ -371,66 +374,145 @@ export class DictionaryDB {
         }
     }
     static BuildFilters(q: DBSearchQuery): DBFilters {
-    const f: DBFilters = {};
-    if (q.word) {
+        const f: DBFilters = {};
         const lang = q.language ?? "English";
-        f.Word = { [`Word.${lang}`]: q.word } as Filter<DBWordsCollection>;
-    }
-    if (q.wordid) {
-        f.Word = { ...(f.Word ?? {}), WordId: q.wordid };
-    }
-    if (q.pos || q.gender || q.kind) {
-        f.Lexeme = {
-            ...(q.pos && { POS: q.pos }),
-            ...(q.gender && { Gender: q.gender }),
-            ...(q.kind && { Kind: q.kind })
-        };
-    }
-    if (q.ipa) {
-        f.IPA = { IPA: q.ipa };
-    }
-    if (q.flags || q.seo) {
-        f.Editorial = {
-            ...(q.flags && { Flags: { $in: q.flags } }),
-            ...(q.seo && { SEO: { $in: q.seo } })
-        };
-    }
-    return f;
+        if (q.word) {
+            f.Word = { [`Word.${lang}`]: q.word } as Filter<DBWordsCollection>;
+        }
+        if (q.wordid) {
+            f.Word = { ...(f.Word ?? {}), WordId: {$in:q.wordid} };
+        }
+        if (q.pos || q.gender || q.kind) {
+            f.Lexeme = {
+                ...(q.pos && { POS: q.pos }),
+                ...(q.gender && { [`Gender.${lang}`]: q.gender }),
+                ...(q.kind && { Kind: q.kind })
+            };
+        }
+        if (q.ipa) {
+            f.IPA = { IPA: q.ipa };
+        }
+        if (q.flags || q.seo) {
+            f.Editorial = {
+                ...(q.flags && { Flags: { $in: q.flags } }),
+                ...(q.seo && { SEO: { $in: q.seo } })
+            };
+        }
+        return f;
     }
     private static DefaultClient() {
         return new MongoClient(
             `mongodb://${process.env.MONGODB_HOST || "localhost"}:${process.env.MONGODB_PORT || "27017"}/`
         );
     }
-    static async Search(
-        q: DBSearchQuery,
-        IncludeParents: boolean = false
-    ): Promise<Word<keyof PartOfSpeech>[]> {
+    static async Search(q: DBSearchQuery): Promise<Word<keyof PartOfSpeech>[]> {
         const db = new DictionaryDB(this.DefaultClient());
         await db.client.connect();
-        const filters = DictionaryDB.BuildFilters(q);
-        const RootWords = await db.Words
-            .find(filters.Word ?? {})
-            .toArray();
-        if (RootWords.length === 0) {
-            await db.client.close();
-            return [];
-        }
-        const IdSet = new Set<string>();
-        for (const w of RootWords) IdSet.add(w.WordId);
-        if (IncludeParents) {
-            const RootIds = RootWords.map(w => w.WordId);
-            const parents = await db.Words.find({
-                "Aliases.WordId": { $in: RootIds }
-            }).toArray();
-            for (const p of parents) IdSet.add(p.WordId);
-        }
-        const ids = [...IdSet];
-        const [WordDocs, lexemes, ipa, editorial, defs] = await Promise.all([
-            db.Words.find({ WordId: { $in: ids } }).toArray(),
-            db.Lexemes.find({ WordIds: { $in: ids }, ...(filters.Lexeme ?? {}) }).toArray(),
-            db.Morphemes.find({ WordIds: { $in: ids }, ...(filters.IPA ?? {}) }).toArray(),
-            db.Editorial.find({ WordIds: { $in: ids }, ...(filters.Editorial ?? {}) }).toArray(),
+        const lang = q.language ?? "English";
+        const raw = q.word ?? "";
+        const regex = new RegExp(raw, "i");
+
+        // Build lexeme case/plurality matchers
+        const LexemeCaseQueries = (() => {
+            const cases: Array<keyof CaseStructure<string>> = [
+                "Nominative", "Genitive", "Dative",
+                "Accusative", "Instrumental", "Locative", "Vocative"
+            ];
+            const numbers: Array<keyof CasePlurality<string>> = ["Singular", "Plural"];
+            const out: Record<string, any>[] = [];
+            for (const c of cases) {
+                for (const n of numbers) {
+                    out.push({
+                        [`Cases.${c}.${n}.Name.${lang}`]: regex
+                    });
+                }
+            }
+            return out;
+        })();
+
+        const pipeline = [
+            // 1. Direct match
+            {
+                $match: {
+                    $or: [
+                        { [`Word.${lang}`]: regex },
+                        { [`Normalised.${lang}`]: regex },
+                        {
+                            Aliases: {
+                            $elemMatch: {
+                                [`Name.${lang}`]: regex
+                            }
+                            }
+                        }
+                    ]
+                }
+            },
+            { $addFields: { _source: "direct" } },
+            {
+                $unionWith: {
+                    coll: "Lexeme",
+                    pipeline: [
+                        { $match: { $or: LexemeCaseQueries } },
+                        { $project: { WordId: "$WordIds", _source: "lexeme" } },
+                        { $unwind: "$WordId" }
+                    ]
+                }
+            },
+            {
+                $group: {
+                    _id: "$WordId",
+                    sources: { $addToSet: "$_source" }
+                }
+            },
+            {
+                $addFields: {
+                    isDirect: { $in: ["direct", "$sources"] },
+                    isLexeme: { $in: ["lexeme", "$sources"] }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    rows: { $push: "$$ROOT" },
+                    hasDirect: { $max: "$isDirect" }
+                }
+            },
+            {
+                $project: {
+                    rows: {
+                        $cond: [
+                            "$hasDirect",
+                            {
+                                $filter: {
+                                    input: "$rows",
+                                    as: "r",
+                                    cond: { $eq: ["$$r.isDirect", true] }
+                                }
+                            },
+                            "$rows"
+                        ]
+                    }
+                }
+            },
+            { $unwind: "$rows" },
+            {
+                $lookup: {
+                    from: "Words",
+                    localField: "rows._id",
+                    foreignField: "WordId",
+                    as: "word"
+                }
+            },
+            { $unwind: "$word" },
+            { $replaceRoot: { newRoot: "$word" } }
+        ];
+        const WordDocs = await db.Words.aggregate<DBWordsCollection>(pipeline).toArray();
+
+        const ids = WordDocs.map(w => w.WordId);
+        const [lexemes, ipa, editorial, defs] = await Promise.all([
+            db.Lexemes.find({ WordIds: { $in: ids } }).toArray(),
+            db.Morphemes.find({ WordIds: { $in: ids } }).toArray(),
+            db.Editorial.find({ WordIds: { $in: ids } }).toArray(),
             db.Definitions.find({ WordIds: { $in: ids } }).toArray()
         ]);
         const result: Word<keyof PartOfSpeech>[] = [];
@@ -443,11 +525,14 @@ export class DictionaryDB {
             const edit = editorial.find(e => e.WordIds.includes(id));
             const word = Word.Create(lex.POS, {
                 word: wdoc.Word,
-                meaning: {English:""}
+                meaning: { English: "" }
             });
+        
             word.UniqueId = id;
             word.Name = wdoc.Word;
+            word.Normalised = wdoc.Normalised;
             word.Aliases = wdoc.Aliases ?? [];
+
             if (IpaEntry) {
                 word.IPA = IpaEntry.IPA;
                 word.Morpheme = IpaEntry.Morpheme;
@@ -492,17 +577,16 @@ export class DictionaryDB {
             word.Gender = lex.Gender;
             word.PersonPerspective = lex.PersonPerspective;
             const needskind = word instanceof Adverb || word instanceof Determiner || word instanceof Conjunction
-             || word instanceof Pronoun || word instanceof Noun || word instanceof Propernoun;
+             || word instanceof Pronoun ||word instanceof Verb|| word instanceof Noun || word instanceof Propernoun;
             if(needskind) {
                 if(word instanceof Adverb) word.Kind = lex.Kind as AdverbVariant || "Undetermined";
                 if(word instanceof Determiner) word.Kind = lex.Kind as DeterminerVariant || "Undetermined";
                 if(word instanceof Conjunction) word.Kind = lex.Kind as ConjunctionVariant || "Undetermined";
-                //if(word instanceof Verb) word.Kind = lex.Kind
+                if(word instanceof Verb) word.Kind = lex.Kind || "Undetermined";
                 if(word instanceof Pronoun) word.Kind = lex.Kind as PronounVariant || "Undetermined";
-                //if(word instanceof Noun) word.Kind = lex.Kind
+                if(word instanceof Noun) word.Kind = lex.Kind || "Undetermined";
                 if(word instanceof Propernoun) word.Kind = lex.Kind || "Undetermined";
             }
-            //word.Kind = lex.Kind
             result.push(word);
         }
         await db.client.close();

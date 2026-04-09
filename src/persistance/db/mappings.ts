@@ -4,7 +4,7 @@ import { PersonPerspective } from "../../domain/options.js";
 import { WordReference, PartOfSpeech } from "../../domain/structure.js";
 import { TenseContainer } from "../../domain/tense.js";
 import { Thesaurus } from "../../domain/thesaurus.js";
-import { Grapheme } from "../../domain/utils/grapheme.js";
+import { Grapheme } from "../../domain/utils/grapheme/base.js";
 import { MorphemeStructure } from "../../domain/utils/morpheme.js";
 import { Gender } from "../../domain/variants.js";
 import { i18n, Languages } from "../../i18n/labels.js";
@@ -12,6 +12,7 @@ import { DBModFlags, DBSEOFlags } from "./flags.js";
 export interface DBWordsCollection {
     WordId:string;
     Word:i18n<string>,
+    Normalised:i18n<string>,
     Aliases:Array<WordReference>,
     Thesaurus?:Thesaurus,
 }
@@ -33,14 +34,14 @@ export interface DBEditorialCollection {
 export interface DBLexemeCollection {
     WordIds:Array<string>,
     POS:keyof PartOfSpeech,
-    Gender:Gender,
+    Gender:i18n<Gender>,
     Tenses?:TenseContainer,
-    Cases?:CaseStructure,
-    CurrentCase?:keyof CaseStructure,
+    Cases?:CaseStructure<WordReference>,
+    CurrentCase?:keyof CaseStructure<WordReference>,
     Kind?:string,
     Comparative?:WordReference,
     Superlative?:WordReference,
-    PersonPerspective:PersonPerspective;
+    PersonPerspective:i18n<PersonPerspective>;
 }
 
 export interface DBCollections {
@@ -54,7 +55,7 @@ export type InsertCollectionsToDB = {[k in keyof DBCollections]:DBCollections[k]
 
 export interface DBSearchQuery {
     word?: string;
-    wordid?: string;
+    wordid?: string[];
     pos?: keyof PartOfSpeech;
     gender?: Gender;
     kind?: string;

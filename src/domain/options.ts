@@ -6,15 +6,16 @@ import { TenseTime } from "./tense.js";
 import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
 export type PersonPerspective = 0|1|2|3;
 export type WordOptions = {
-    case?:keyof CaseStructure;
+    cases?:keyof CaseStructure<WordReference>;
     isbiased?:boolean;
     connotation?:string;
     excludefromwordchoices?:boolean;
     word:i18n<string>;
-    personperspective?:PersonPerspective;
+    personperspective?:i18n<PersonPerspective>;
     meaning:i18n<string>;
-    gender?:Gender;
+    gender?:i18n<Gender>;
     ispropernoun?:boolean;
+    animate?:boolean;
     isabbreviation?: boolean;
     iscolloquial?:boolean;
     isusedfomally?: boolean;
@@ -43,12 +44,13 @@ export type ConjunctionOptions = WordOptions & {
     kind?:ConjunctionVariant;
 }
 export type NounOptions = WordOptions & {
+    kind?:string;
     singleonly?:boolean;
     pluralonly?:boolean;
     issingle?:boolean;
     isplural?:boolean;
     iscountable?:boolean;
-    currentcase?:keyof CaseStructure;
+    currentcase?:keyof CaseStructure<WordReference>;
 }
 export type VerbOptions = WordOptions & {
     istransitive?:boolean;

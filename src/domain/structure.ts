@@ -1,10 +1,10 @@
 import { i18n, Languages } from "../i18n/labels.js";
-import { CaseStructure, Cases } from "./cases.js";
+import { CasePlurality, CaseStructure, Cases } from "./cases.js";
 import { Definition, DefinitionConstructiorOptions } from "./definition.js";
 import { PersonPerspective, OptionsByPartOfSpeech, AdverbOptions, ConjunctionOptions, DeterminerOptions, PrepositionOptions, PronounOptions, WordOptions, NounOptions, VerbOptions, PropernounOptions } from "./options.js";
 import { TenseContainer, TenseTime, Tense } from "./tense.js";
 import { Thesaurus } from "./thesaurus.js";
-import { Grapheme } from "./utils/grapheme.js";
+import { Grapheme } from "./utils/grapheme/base.js";
 import { Morpheme, MorphemeStructure } from "./utils/morpheme.js";
 import { Gender, AdverbVariant, DeterminerVariant, ConjunctionVariant, PronounVariant, PrepositionVariant } from "./variants.js";
 
@@ -40,10 +40,12 @@ export type WordReference = UnitWord & {
 }
 export interface BaseWord extends UnitWord {
     Exists:true;
+    Normalised:i18n<string>
     Aliases:Array<WordReference>,
     IsRecordComplete:boolean;
     HasBias:boolean;
     IsPropernoun:boolean;
+    IsAnimate:boolean;
     IsAbbreviation:boolean;
     IsColloquial:boolean;
     IsUsedFormally:boolean;
@@ -63,29 +65,31 @@ export interface BaseWord extends UnitWord {
     POS:keyof PartOfSpeech;
     Morpheme:i18n<MorphemeStructure>;
     IPA:i18n<Grapheme<Languages>[]>;
-    Gender:Gender;
+    Gender:i18n<Gender>;
     Denotation:Definition;
     Thesaurus:Thesaurus;
     Tenses?:TenseContainer;
     CurrentTense?:TenseTime;
-    PersonPerspective:PersonPerspective;
+    PersonPerspective:i18n<PersonPerspective>;
     Euphemisms:Array<WordReference>;
-    Cases?:CaseStructure;
-    CurrentCase?:keyof CaseStructure;
+    Cases?:CaseStructure<WordReference>;
+    CurrentCase?:keyof CaseStructure<WordReference>;
     Contexts:Array<WordReference>;
     Category:string;
 }
 export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     IsRecordComplete: boolean;
+    Normalised: i18n<string>;
     HasBias: boolean;
     Exists: true;
     UniqueId: string;
     Name: i18n<string>;
     Aliases: WordReference[];
     POS:T;
+    IsAnimate: boolean;
     Morpheme: i18n<MorphemeStructure>;
     IPA: i18n<Grapheme<Languages>[]>;
-    Gender: Gender;
+    Gender: i18n<Gender>;
     IsPropernoun: boolean;
     IsAbbreviation: boolean;
     IsColloquial: boolean;
@@ -100,10 +104,10 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
     Thesaurus: Thesaurus;
     Tenses?: TenseContainer;
     CurrentTense?:TenseTime;
-    PersonPerspective: PersonPerspective;
+    PersonPerspective: i18n<PersonPerspective>;
     Euphemisms: Array<WordReference>;
-    Cases?: CaseStructure;
-    CurrentCase?: keyof CaseStructure;
+    Cases?: CaseStructure<WordReference>;
+    CurrentCase?: keyof CaseStructure<WordReference>;
     IsArchaic: boolean;
     IsNeologism: boolean;
     Contexts: Array<WordReference>;
@@ -117,21 +121,16 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         if(!options.word || typeof options.word === "undefined") throw "Eh, did you forget something?";
         let uid = crypto.randomUUID();
         this.Aliases = [];
-        let selfref:WordReference = {
-            ExcludeFromWordChoice: options.excludefromwordchoices || false,
-            Name: options.word,
-            Exists: true,
-            WordId: uid,
-        }
-        this.Aliases.push(selfref)
         this.IsRecordComplete = false;
         this.Exists = true;
         this.UniqueId = uid;
+        this.IsAnimate = options.animate || false;
         this.Name = options.word;
+        this.Normalised = options.word;
         this.POS = pos;
         this.Morpheme = {English:Morpheme.GetStructure(options.word.English)};
         this.IPA = {English:Morpheme.Generate(options.word.English)};
-        this.Gender = options.gender || "U";
+        this.Gender = options.gender || {English:"U", Polish:"U"};
         this.IsPropernoun = pos === "Propernoun";
         this.IsAbbreviation = options.isabbreviation ||false;
         this.IsColloquial = options.iscolloquial ||false;
@@ -153,11 +152,13 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         this.Connotation = undefined;
         this.Thesaurus = {};
         this.Tenses = (pos === "Verb" || pos === "Participle") ? Tense.EnglishAll(this.Name.English):undefined;
-        this.CurrentTense = "Present";
-        this.PersonPerspective = options.personperspective||0;
-        this.Cases = (pos === "Noun"||pos === "Pronoun" || pos==="Propernoun"||pos==="Adjective") ? Cases.English(selfref) : undefined;
+        this.CurrentTense = pos === "Verb" ? "Present":undefined;
+        this.PersonPerspective = options.personperspective||{English:0, Polish:0};
+        this.Cases = (pos === "Noun"||pos === "Pronoun" || pos==="Propernoun"||pos==="Adjective") ? Cases.Generate(this, "All") : undefined;
+        if(typeof this.Cases !== "undefined" && typeof this.Cases.Nominative.Singular !== "undefined")
+            this.UniqueId = this.Cases.Nominative.Singular.WordId;
         this.Euphemisms = options.euphemisms||[];
-        this.CurrentCase = options.case||"Nominative";
+        this.CurrentCase = options.cases||"Nominative";
         this.IsArchaic = options.isarchaic||false;
         this.IsNeologism = options.isneologism||false;
         this.Contexts = [];
@@ -197,15 +198,9 @@ export class Word<T extends keyof PartOfSpeech> implements BaseWord {
         }
         return wr;
     }
-    AddAlias(word:i18n<string>, c?:keyof CaseStructure, p?:boolean){
-        let wr:WordReference = {
-            Name:word,
-            Exists:true, 
-            ExcludeFromWordChoice:this.ExcludeFromWordChoice, 
-            WordId:crypto.randomUUID()
-        }
-        this.Aliases.push(wr);
-        if(typeof this.Cases !== "undefined" && c && p) this.Cases[c][p?"Plural":"Singular"] = wr;
+    AddAlias(ref:WordReference, c:keyof CaseStructure<WordReference>, p:keyof CasePlurality<WordReference>){
+        this.Aliases.push(ref);
+        if(typeof this.Cases !== "undefined") this.Cases[c][p] = ref;
         return this;
     }
     TranslateMorpheme(l:keyof i18n<string>, m:MorphemeStructure){
@@ -313,6 +308,7 @@ export class Conjunction extends Word<"Conjunction"> {
     }
 }
 export class Noun extends Word<"Noun"> {
+    Kind:string;
     IsSingular:boolean;
     IsPlural:boolean;
     IsCountable:boolean;
@@ -320,6 +316,7 @@ export class Noun extends Word<"Noun"> {
     IsPluralOnly:boolean;
     constructor(pos:"Noun",options:NounOptions){
         super(pos, options);
+        this.Kind = options.kind || "Undetermined";
         this.IsSingular = !options.word.English.endsWith("s");
         this.IsPlural = options.word.English.endsWith("s");
         this.IsCountable = options.iscountable||true;
@@ -345,10 +342,12 @@ export class Noun extends Word<"Noun"> {
 export class Verb extends Word<"Verb">{
     IsTransitive:boolean;
     IsActive:boolean;
+    Kind:string;
     constructor(pos:"Verb",options:VerbOptions){
         super(pos, options);
         this.IsTransitive = options.istransitive||true;
         this.IsActive = options.isactive||true;
+        this.Kind = options.kind || "Undetermined;"
     }
 }
 export class Participle extends Word<"Participle"> {

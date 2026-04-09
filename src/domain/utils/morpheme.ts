@@ -1,5 +1,7 @@
 import { English } from "../../langs/english.js";
-import { GraphemeSpelling, Grapheme, EnglishGraphemeExtractor, GraphemeResolver, GraphemeSymbol, POSSIBLE_SPELLINGS } from "./grapheme.js";
+import { Grapheme, GraphemeSymbol, GraphemeSpelling } from "./grapheme/base.js";
+import { GraphemeExtractor, GraphemeResolver } from "./grapheme/handlers.js";
+import { ENGLISH_POSSIBLE_SPELLINGS } from "./grapheme/misc.js";
 import { Letter } from "./language.js";
 
 export interface MorphemeStructure {
@@ -10,23 +12,17 @@ export interface MorphemeStructure {
 
 export class Morpheme {
   static Generate(word: string): Grapheme<"English">[] {
-    const graphemes = EnglishGraphemeExtractor.extract(word);
+    const graphemes = GraphemeExtractor.Extract(word, "English");
     const structure = MorphemeStructureBuilder.Build("English", word);
 
     return graphemes.map((g, index) => {
-      const options = POSSIBLE_SPELLINGS[g];
+      const options = ENGLISH_POSSIBLE_SPELLINGS[g];
 
       if (options.length === 1) {
         return this.BuildResolved(g, options[0]!);
       }
 
-      const auto = GraphemeResolver.resolve(
-        g,
-        word,
-        index,
-        graphemes,
-        structure
-      );
+      const auto = GraphemeResolver.Resolve({grapheme:g, word:word, index:index, graphemes:graphemes, structure:structure, lang:"English"});
 
       if (auto !== null && options.includes(auto)) {
         return this.BuildResolved(g, auto);

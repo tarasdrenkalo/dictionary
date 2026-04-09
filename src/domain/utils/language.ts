@@ -1,6 +1,4 @@
 import { i18n, Languages } from "../../i18n/labels.js";
-import { GraphemeSpelling } from "./grapheme.js";
-
 export interface Letter {
     // --- A family ---
     /** Latin small letter a */ A:"a",

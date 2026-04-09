@@ -2,7 +2,7 @@ import { EnglishIrregularVerb, IrregularVerbs as ivs } from "../domain/constants
 import { Prefix } from "../domain/constants/prefix.en.js";
 import { Suffix } from "../domain/constants/suffix.en.js";
 import { PrepositionWB, PronounWB } from "../domain/constants/wb.en.js";
-import { GraphemeSpelling } from "../domain/utils/grapheme.js";
+import { GraphemeSpelling } from "../domain/utils/grapheme/base.js";
 import { Language, Letter } from "../domain/utils/language.js";
 import { Morpheme } from "../domain/utils/morpheme.js";
 export type EnglishDialect = "GB"|"US";
