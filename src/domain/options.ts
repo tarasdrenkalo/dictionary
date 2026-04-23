@@ -29,7 +29,7 @@ export type WordOptions = {
     isarchaic?: boolean;
     isneologism?: boolean;
     contexts?: Array<WordReference>;
-    category?:string;
+    category?:string[];
     isparasitic?:boolean;
     sources?:Array<string>;
 }

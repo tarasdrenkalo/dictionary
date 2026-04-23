@@ -5,7 +5,7 @@ export type DeterminerVariant = GenericVariant | "Definite"|"Indefinite"|"Quanti
 export type ConjunctionVariant = GenericVariant | "Coordinating"|"Subordinating"|"Correlative"|"Conjuctive";
 export type PronounVariant = GenericVariant|"Reflexive"|"Personal"|"Interrogative"|"Possessive"|"Definitive";
 export type PrepositionVariant = GenericVariant|"Spatial"|"Temporal"|"Causal"|"Agentive"|"Phrasal";
-export interface VariantByPartOfSpeech<GenericVariant> {
+export interface VariantByPartOfSpeech {
     Adjective:GenericVariant;
     Adverb:AdverbVariant;
     Noun:GenericVariant;

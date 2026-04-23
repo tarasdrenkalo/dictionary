@@ -14,12 +14,12 @@ export interface DBWordsCollection {
     Word:i18n<string>,
     Normalised:i18n<string>,
     Aliases:Array<WordReference>,
-    Thesaurus?:Thesaurus,
+    Thesaurus:Thesaurus,
 }
 export interface DBMorphemeCollection {
     WordIds:Array<string>,
     IPA:i18n<Grapheme<Languages>[]>,
-    Morpheme:i18n<MorphemeStructure>,
+    Morpheme:i18n<MorphemeStructure<Languages>>,
 }
 export interface DBDefinitionsCollection {
     WordIds:string[],
@@ -35,12 +35,12 @@ export interface DBLexemeCollection {
     WordIds:Array<string>,
     POS:keyof PartOfSpeech,
     Gender:i18n<Gender>,
-    Tenses?:TenseContainer,
-    Cases?:CaseStructure<WordReference>,
-    CurrentCase?:keyof CaseStructure<WordReference>,
-    Kind?:string,
-    Comparative?:WordReference,
-    Superlative?:WordReference,
+    Tenses:i18n<TenseContainer<Languages, WordReference>>|null,
+    Cases:CaseStructure<WordReference>|null,
+    CurrentCase:keyof CaseStructure<WordReference>|null,
+    Kind:string,
+    Comparative:WordReference|null,
+    Superlative:WordReference|null,
     PersonPerspective:i18n<PersonPerspective>;
 }
 

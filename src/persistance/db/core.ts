@@ -5,6 +5,7 @@ import { DBWordsCollection, DBEditorialCollection, DBDefinitionsCollection, DBLe
 import { Definition } from "../../domain/definition.js";
 import { AdverbVariant, ConjunctionVariant, DeterminerVariant, PronounVariant } from "../../domain/variants.js";
 import { CasePlurality, CaseStructure } from "../../domain/cases.js";
+import { Morpheme } from "../../domain/utils/morpheme.js";
 
 export class DictionaryDB {
     private static MDBClient = new MongoClient(
@@ -77,26 +78,33 @@ export class DictionaryDB {
             w instanceof Pronoun || w instanceof Propernoun;
         let compref:WordReference = {
             Name:w.Name,
+            Normalised:w.Name,
+            IPA:{English:Morpheme.Generate("English", w.Name.English)},
+            Morpheme:{English:Morpheme.GetStructure("English",w.Name.English)},
             ExcludeFromWordChoice:w.ExcludeFromWordChoice,
             Exists:true,
             WordId:crypto.randomUUID()
         }
         let supref:WordReference = {
             Name:w.Name,
+            Normalised:w.Name,
+            IPA:{English:Morpheme.Generate("English", w.Name.English)},
+            Morpheme:{English:Morpheme.GetStructure("English",w.Name.English)},
             ExcludeFromWordChoice:w.ExcludeFromWordChoice,
             Exists:true,
             WordId:crypto.randomUUID()
         }
         return {
-            WordIds: [w.UniqueId],
+            WordIds: [...new Set([w.UniqueId].concat(w.Aliases.map(a=>a.WordId)))],
             POS: w.POS,
             Gender: w.Gender,
             PersonPerspective: w.PersonPerspective,
-            Cases: NeedCases ? w.Cases : undefined,
-            Kind: NeedKind ? w.Kind : undefined,
-            Comparative: (w instanceof Adjective || w instanceof Participle) ? w.Comparative ?? compref : undefined,
-            Superlative: (w instanceof Adjective || w instanceof Participle) ? w.Superlative ?? supref : undefined
-        };
+            Cases: NeedCases ? w.Cases : null,
+            Kind: NeedKind ? w.Kind : "Undetermined",
+            Comparative: (w instanceof Adjective || w instanceof Participle) ? w.Comparative ?? compref : null,
+            Superlative: (w instanceof Adjective || w instanceof Participle) ? w.Superlative ?? supref : null,
+            Tenses:w.Tenses
+        } as DBLexemeCollection;
     }
 
     private static LexemeFingerprint(l: DBLexemeCollection) {
@@ -128,17 +136,18 @@ export class DictionaryDB {
     static PackOne(w: Word<keyof PartOfSpeech>): DBCollections {
         const flags = this.BuildFlags(w);
         const seo = this.BuildSEO(w);
-        const wordIds = Array.from(new Set([w.UniqueId, ...w.Aliases.map(a => a.WordId)]));
+        const WordIds = Array.from(new Set([w.UniqueId, ...w.Aliases.map(a => a.WordId)]));
 
         return {
             Word: {
                 Normalised:w.Normalised,
                 WordId: w.UniqueId,
                 Word: w.Name,
-                Aliases: w.Aliases
+                Aliases: w.Aliases,
+                Thesaurus:w.Thesaurus
             },
             Definition: {
-                WordIds: wordIds,
+                WordIds: WordIds,
                 Denotation: w.Denotation.ToJSON(),
                 Connotation: w.Connotation?.ToJSON()
             },
@@ -149,7 +158,7 @@ export class DictionaryDB {
             },
             Lexeme: this.BuildLexeme(w),
             Editorial: {
-                WordIds: wordIds,
+                WordIds: WordIds,
                 Flags: [...flags],
                 SEO: [...seo]
             }
@@ -571,8 +580,8 @@ export class DictionaryDB {
                 }
             }
             if (word instanceof Adjective || word instanceof Participle) {
-                word.Comparative = lex.Comparative ?? undefined;
-                word.Superlative = lex.Superlative ?? undefined;
+                word.Comparative = lex.Comparative ?? null;
+                word.Superlative = lex.Superlative ?? null;
             }
             word.Gender = lex.Gender;
             word.PersonPerspective = lex.PersonPerspective;

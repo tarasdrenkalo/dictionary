@@ -2,14 +2,14 @@ import { EnglishIrregularVerb, IrregularVerbs as ivs } from "../domain/constants
 import { Prefix } from "../domain/constants/prefix.en.js";
 import { Suffix } from "../domain/constants/suffix.en.js";
 import { PrepositionWB, PronounWB } from "../domain/constants/wb.en.js";
-import { GraphemeSpelling } from "../domain/utils/grapheme/base.js";
+import { GraphemeSpelling, GraphemeSymbol } from "../domain/utils/grapheme/base.js";
 import { Language, Letter } from "../domain/utils/language.js";
-import { Morpheme } from "../domain/utils/morpheme.js";
+import { MorphemeStructureBuilder } from "../domain/utils/morpheme.js";
 export type EnglishDialect = "GB"|"US";
 export class English implements Language<"English"> {
-    VOWELS:Array<keyof Letter> = ["A", "O", "Y", "U", "E", "I"];
+    VOWELS:Array<Letter["English"]> = ["A", "O", "Y", "E", "U", "I"];
     readonly Name = "English";
-    readonly GRAPHEME_REGEX: RegExp = /(TCH|DGE|IGH|SH|CH|TH|PH|NG|CK|EE|OO|AI|EA|OA|IE|OU|OW|.)/gi;
+    readonly GRAPHEME_REGEX: RegExp = /^(TCH|DGE|IGH|EER|EAR|AIR|URE|AR|ER|IR|OR|UR|SH|CH|CZ|TH|PH|NG|CK|QU|WH|GH|KN|WR|GN|AI|AY|EE|EA|OA|IE|EI|OU|OW|OO|AU|AW|OI|OY|EU)/i;
     readonly SHORT_VOWELS:Array<GraphemeSpelling["English"]> = [
       "æ",  // cat
       "ɛ",  // bed
@@ -24,18 +24,18 @@ export class English implements Language<"English"> {
         "iː","eɪ","aɪ","oʊ","uː",
         "ə","ɔː","ɔɪ","ɪə","ɛə","ɝ","jʊə","ʊə"
     ];
-    GetLetters(): Array<keyof Letter> {
+    GetLetters(): Array<Letter["English"]> {
         return ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
     }
-    HasLetter(l: keyof Letter): boolean {
-        return this.GetLetters().includes(l);
+    HasLetter(l:any): boolean {
+        return this.GetLetters().indexOf(l) != -1;
     }
-    GetOrderByLetter(l: keyof Letter): number | undefined {
+    GetOrderByLetter(l: Letter["English"]): number | undefined {
         const assert = this.GetLetters().includes(l);
         if(!assert) return void l;
         return this.GetLetters().indexOf(l)+1;
     }
-    GetLetterByOrder(n: number): keyof Letter | undefined {
+    GetLetterByOrder(n: number): Letter["English"] | undefined {
         const l =  this.GetLetters()[n];
         return typeof l !=="undefined" ? l : void l;
     }
@@ -46,7 +46,7 @@ export class English implements Language<"English"> {
     readonly PronounWB = PronounWB;
     readonly Gerund = {
         ing: (word: string, dialect:EnglishDialect = "GB"):string => {
-            const schema = Morpheme.GetStructure(word).Schema;
+            const schema = MorphemeStructureBuilder.Build("English", word).Schema;
             if (word.endsWith("y")) {
                 const form = word.slice(0, -1) + "ing";
                 return form;
@@ -67,7 +67,7 @@ export class English implements Language<"English"> {
             return form;
         },
         ed: (word: string, dialect:EnglishDialect = "GB", participle: boolean = false):string => {
-            const schema = Morpheme.GetStructure(word).Schema;
+            const schema = MorphemeStructureBuilder.Build("English", word).Schema;
             const entry = (new English().IrregularVerbs as Record<string, EnglishIrregularVerb>)[word];
             if (entry && typeof entry !== "undefined") {
                 return participle ? (entry.Participle[dialect]) : (entry.Past[dialect]);
@@ -84,13 +84,13 @@ export class English implements Language<"English"> {
             return word + "ed";
         }  
     }
-    readonly POSSIBLE_SPELLINGS = {
-        A:  ["æ", "eɪ", "ɑ", "ɔ", "ə"],
-        E:  ["ɛ", "iː", "ɪ", "ə"],
-        I:  ["ɪ", "aɪ", "iː"],
-        O:  ["ɒ", "ɑ", "oʊ", "ʌ", "ə", "uː"],
-        U:  ["ʌ", "juː", "uː", "ʊ", "ə"],
-        Y:  ["ɪ", "aɪ", "iː", "j"],
+    readonly POSSIBLE_SPELLINGS:Record<GraphemeSymbol["English"], GraphemeSpelling["English"][]> = {
+        A: ["æ", "eɪ", "ɑ", "ɔ", "ə"],
+        E: ["ɛ", "iː", "ɪ", "ə"],
+        I: ["ɪ", "aɪ", "iː"],
+        O: ["ɒ", "ɑ", "oʊ", "ʌ", "ə", "uː"],
+        U: ["ʌ", "juː", "uː", "ʊ", "ə"],
+        Y: ["ɪ", "aɪ", "iː", "j"],
         B: ["b"],
         C: ["k", "s"],
         D: ["d"],
@@ -146,8 +146,17 @@ export class English implements Language<"English"> {
         URE: ["jʊə", "ʊə"],
         A_E: ["eɪ"],
         O_E: ["oʊ"],
-        U_E: ["juː","uː"],
+        U_E: ["juː", "uː"],
         I_E: ["aɪ"],
         E_E: ["iː"],
+        ER: ["ɝ"],
+        IR: ["ɝ"],
+        UR: ["ɝ"],
+        OR: ["ɔː"],
+        AR: ["ɑː"],
+        EER: ["ɪə", "ɛə", "ɝ"],
+        CZ: ["tʃ"],
+        LD: ["d","ld"],
+        MB: ["m","mb"]
     }
 }

@@ -2,7 +2,7 @@ import { Languages } from "../../../i18n/labels.js";
 export type EnglishGraphemeSymbol = "A"|"B"|"C"|"D"|"E"|
     "F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|
     "T"|"U"|"V"|"W"|"X"|"Y"|"Z"|"WR"|"KN"|"AY"|"EI"|"AU"|"AW"|"OI"|
-    "OY"|"EU"|"ER"|"IR"|"UR"|"OR"|"EAR"|"AR"|"EER"|"AIR"|"URE"|"GN"|"SH"|"QU"|"GH"|"CH"|"TH"|"LD"|"MB"|"PH"|"NG"|"CK"|
+    "OY"|"EU"|"ER"|"IR"|"UR"|"OR"|"EAR"|"AR"|"EER"|"AIR"|"URE"|"GN"|"SH"|"QU"|"GH"|"CH"|"CZ"|"TH"|"LD"|"MB"|"PH"|"NG"|"CK"|
     "EE"|"EA"|"AI"|"OA"|"IE"|"OU"|"OW"|"WH"|"OO"|"TCH"|"DGE"|"IGH"|"A_E"|"O_E"|"U_E"|"E_E"|"I_E";
 export type PolishGraphemeSymbol = "A"|"Ą"|"B"|"C"|"Ć"|"D"|"E"|"Ę"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"Ł"|"M"|"N"|
     "Ń"|"O"|"Ó"|"P"|"R"|"S"|"Ś"|"T"|"U"|"W"|"Y"|"Z"|"Ź"|"Ż"|"CZ"|"SZ"|"DZ"|"DŻ"|"DŹ"|"RZ"|"CH"|"CI"|"SI"|"ZI";;
@@ -59,7 +59,7 @@ export type GraphemeRule<L extends Languages> = (
 export type Phoneme<L extends Languages> =
   | { State: "Resolved"; Symbol: GraphemeSpelling[L]; IsVowel: boolean, IsShort?:boolean, IsLong?:boolean }
   | { State: "Ambiguous"; Options: GraphemeSpelling[L][] }
-  | { State: "Silent" };
+  | { State: "Silent", Symbol:""};
 export interface Grapheme<L extends Languages> {
   Grapheme: GraphemeSymbol[L];
   Phoneme: Phoneme<L>;

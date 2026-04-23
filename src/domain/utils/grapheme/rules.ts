@@ -77,6 +77,7 @@ export const ENGLISH_RULES_BY_GRAPHEME:Record<GraphemeSymbol["English"], Graphem
     AIR: () => "ɛə",
     URE: () => "jʊə",
     SH: () => "ʃ",
+    CZ: () => "tʃ",
     CH: () => "tʃ",
     TH: () => "ð",      // default voiced; unvoiced handled elsewhere if needed
     PH: () => "f",

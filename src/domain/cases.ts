@@ -1,6 +1,7 @@
 import { Languages } from "../i18n/labels.js";
 import { PartOfSpeech, Word, WordReference } from "./structure.js";
 import pluralize from "pluralize";
+import { Morpheme } from "./utils/morpheme.js";
 export interface CasePlurality<C extends WordReference|string> {
     Singular?:C;
     Plural?:C;
@@ -18,7 +19,7 @@ export class Cases {
     static Generate(wr:Word<keyof PartOfSpeech>, lang:"English"):CaseStructure<string>;
     static Generate(wr:Word<keyof PartOfSpeech>, lang:"Polish"):null|CaseStructure<string>;
     static Generate(wr:Word<keyof PartOfSpeech>, lang:"All"):CaseStructure<WordReference>;
-    static Generate(wr:Word<keyof PartOfSpeech>, lang:Languages|"All"):null|CaseStructure<string>|CaseStructure<WordReference> {
+    static Generate(wr:Word<keyof PartOfSpeech>, lang:Languages|"All"):null|CaseStructure<string|WordReference> {
         switch(lang){
             case "English": {
                 const singularised = pluralize.singular(wr.Name.English);
@@ -38,7 +39,7 @@ export class Cases {
                 return tbl;
             }
             case "Polish":{
-                if(typeof wr.Name.Polish != "string" || typeof wr.Gender.Polish != "string") return null;
+                if(typeof wr.Name.Polish !== "string" || typeof wr.Gender.Polish !== "string") return null;
                 const HARD_CONSONANTS = new Set([
                     "p", "b", "m", "f", "w",
                     "t", "d", "s", "z", "n", "r", "ł",
@@ -139,22 +140,30 @@ export class Cases {
                 const ispolishsupported = PolishDeclensed != null;
                 for(const c of allcasesarr) {
                     for(const n of allnumbers) {
-                        const rf:WordReference = {
+                        let rf:WordReference = {
                             ExcludeFromWordChoice:wr.ExcludeFromWordChoice,
                             Exists:true,
                             Name:{English:`${EnglishDeclensed[c][n]}`},
-                            WordId:crypto.randomUUID()
+                            Normalised:{English:`${EnglishDeclensed[c][n]}`},
+                            WordId:crypto.randomUUID() as string,
+                            IPA:{English:Morpheme.Generate("English", `${EnglishDeclensed[c][n]}`)},
+                            Morpheme:{English:Morpheme.GetStructure("English", `${EnglishDeclensed[c][n]}`)}
                         }
-                        rf.Name.Polish = ispolishsupported ? PolishDeclensed[c][n]: undefined;
+                        if(ispolishsupported) {
+                            rf.Name.Polish = PolishDeclensed[c][n];
+                            rf.Normalised.Polish = PolishDeclensed[c][n];
+                            rf.Morpheme.Polish = Morpheme.GetStructure("Polish", `${PolishDeclensed[c][n]}`);
+                        }
                         cs[c][n] = rf;
                         wr.AddAlias(rf, c, n);
                     }
+                        
+                    }
+                    return cs;
                 }
-                return cs;
-            }
-            default: {
-                throw "Check your parametres!"
+                default: {
+                    throw "Check your parametres!"
+                }
             }
         }
     }
-}

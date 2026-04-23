@@ -1,18 +1,17 @@
-import { i18n, Languages } from "../../../i18n/labels.js";
-import { PartOfSpeech, Word } from "../../structure.js";
+import { Languages } from "../../../i18n/labels.js";
+import { English } from "../../../langs/english.js";
+import { Polish } from "../../../langs/polish.js";
 import { Letter } from "../language.js";
 import { MorphemeStructure } from "../morpheme.js";
 import { EnglishGraphemeContext, EnglishGraphemeSymbol, Grapheme, GraphemeContext, GraphemeSpelling, GraphemeSymbol, Phoneme, PolishGraphemeContext, PolishGraphemeSymbol } from "./base.js";
 import { ENGLISH_GRAPHEMES } from "./misc.js";
 import { ENGLISH_RULES_BY_GRAPHEME, POLISH_RULES_BY_GRAPHEME } from "./rules.js";
 export class GraphemeExtractor {
-    private static readonly ENGLISH_MULTI = /^(TCH|DGE|IGH|EER|EAR|AIR|URE|AR|ER|IR|OR|UR|SH|CH|TH|PH|NG|CK|QU|WH|GH|KN|WR|GN|AI|AY|EE|EA|OA|IE|EI|OU|OW|OO|AU|AW|OI|OY|EU)/i;
-    private static readonly POLISH_MULTI = /^(DŹ|DŻ|CZ|SZ|RZ|CH|DZ|SI|ZI|CI)/i;
-
-    static Extract(word:string, lang:"English"):GraphemeSymbol["English"][];
-    static Extract(word:string, lang:"Polish"):GraphemeSymbol["Polish"][];
-    static Extract(word:Word<keyof PartOfSpeech>, lang:"All"):i18n<GraphemeSymbol[Languages][]>;
-    static Extract(word:Word<keyof PartOfSpeech>|string, lang:Languages|"All"){
+    static readonly ENGLISH_MULTI = /^(TCH|DGE|IGH|EER|EAR|AIR|URE|AR|ER|IR|OR|UR|SH|CH|CZ|TH|PH|NG|CK|QU|WH|GH|KN|WR|GN|AI|AY|EE|EA|OA|IE|EI|OU|OW|OO|AU|AW|OI|OY|EU)/i;
+    static readonly POLISH_MULTI = /^(DŹ|DŻ|CZ|SZ|RZ|CH|DZ|SI|ZI|CI)/i;
+    static Extract<L extends "English">(word:string, lang:L):GraphemeSymbol[L][];
+    static Extract<L extends "Polish">(word:string, lang:L):GraphemeSymbol[L][];
+    static Extract<L extends Languages>(word:string, lang:L){
         switch(lang) {
             case "English":{
                 if(typeof word !== "string") throw "";
@@ -72,31 +71,35 @@ export class GraphemeExtractor {
                 }
                 return result;
             }
-            case "All":{
-                if(!(word instanceof Word)) throw "";
-                let result:i18n<GraphemeSymbol[Languages][]> = {
-                    English:this.Extract(word.Name.English, "English")
-                }
-                if(typeof word.Name.Polish === "string") result.Polish = this.Extract(word.Name.Polish, "Polish");
-                return result;
-            }
         }
     }
 }
 
 export class GraphemeContextConstructor {
+  static Build<L extends "English">(options: {
+    lang: L;
+    graphemes: GraphemeSymbol[L][];
+    letters: Array<Uppercase<Letter[L]>>;      // English only
+    index: number;
+    structure: MorphemeStructure<L>;      // English only
+  }): GraphemeContext[L];
+  static Build<L extends "Polish">(options: {
+    lang: L;
+    letters: undefined;
+    graphemes: GraphemeSymbol[L][];
+    index: number;
+    structure: undefined;
+  }): GraphemeContext[L];
   static Build<L extends Languages>(options: {
     lang: L;
     graphemes: GraphemeSymbol[L][];
-    letters?: Array<keyof Letter>;      // English only
+    letters: L extends "English" ? Array<Uppercase<Letter[L]>> : undefined;
     index: number;
-    structure?: MorphemeStructure;      // English only
+    structure: L extends "English" ? MorphemeStructure<L> : undefined;      // English only
   }): GraphemeContext[L] {
     const { lang, graphemes, letters, index, structure } = options;
-
     const prevLetter = letters?.[index - 1];
     const nextLetter = letters?.[index + 1];
-
     if (lang === "English") {
       const ctx: EnglishGraphemeContext = {
         Previous: graphemes[index - 1] as GraphemeSymbol["English"],
@@ -122,79 +125,113 @@ export class GraphemeContextConstructor {
   }
 }
 
+export type EnglishResolveOptions = {
+  lang: "English",
+  grapheme: EnglishGraphemeSymbol,
+  graphemes: EnglishGraphemeSymbol[],
+  word: string,
+  index: number,
+  structure: MorphemeStructure<"English">
+};
+
+export type PolishResolveOptions = {
+  lang: "Polish",
+  grapheme: PolishGraphemeSymbol,
+  graphemes: PolishGraphemeSymbol[],
+  word: string,
+  index: number
+};
+
 /// RESOLVE
 
-export class EnglishGraphemeResolver {
-  static Resolve(
-    grapheme: EnglishGraphemeSymbol,
-    word: string,
-    index: number,
-    graphemes: EnglishGraphemeSymbol[],
-    structure: MorphemeStructure
-  ): GraphemeSpelling["English"]|null {
-
-    const letters = word.replace(/[^\p{L}]+/gu, "").toUpperCase().split("");
-
-    const ctx = GraphemeContextConstructor.Build<"English">(
-        {graphemes:graphemes,
-            letters:letters as Array<keyof Letter>,
-            index:index,
-        structure:structure,
-        lang:"English"
-    });
-
-    const rule = ENGLISH_RULES_BY_GRAPHEME[grapheme];
-    return rule(grapheme, ctx, word);
-  }
-}
-
-export class PolishGraphemeResolver {
-  static Resolve(
-    grapheme: PolishGraphemeSymbol,
-    word: string,
-    index: number,
-    graphemes: PolishGraphemeSymbol[]
-  ): GraphemeSpelling["Polish"] {
-
-    const ctx = GraphemeContextConstructor.Build<"Polish">({graphemes:graphemes, index:index, lang:"Polish"});
-    const rule = POLISH_RULES_BY_GRAPHEME[grapheme];
-    const ipa = rule(grapheme, ctx, word);
-
-    return ipa;
-  }
-}
-
 export class GraphemeResolver {
-  static Resolve<L extends Languages>(options: {
-    lang: L,
-    grapheme: GraphemeSymbol[L],
-    graphemes: GraphemeSymbol[L][],
-    word: string,
-    index: number,
-    structure: MorphemeStructure
-  }): GraphemeSpelling[L] {
-
-    if (options.lang === "English") {
-      return EnglishGraphemeResolver.Resolve(
-        options.grapheme as EnglishGraphemeSymbol,
-        options.word,
-        options.index,
-        options.graphemes as EnglishGraphemeSymbol[],
-        options.structure
-      ) as GraphemeSpelling[L];
+  // English overload
+  static Resolve(
+    options: {
+      lang: "English",
+      grapheme: EnglishGraphemeSymbol,
+      graphemes: EnglishGraphemeSymbol[],
+      word: string,
+      index: number,
+      structure: MorphemeStructure<"English">
     }
+  ): GraphemeSpelling["English"] | null;
 
+  // Polish overload
+  static Resolve(
+    options: {
+      lang: "Polish",
+      grapheme: PolishGraphemeSymbol,
+      graphemes: PolishGraphemeSymbol[],
+      word: string,
+      index: number
+    }
+  ): GraphemeSpelling["Polish"];
+
+  // Implementation signature – union, not generic, and NOT English-only spelling
+  static Resolve(
+    options: {
+      lang: Languages,
+      grapheme: GraphemeSymbol[Languages],
+      graphemes: GraphemeSymbol[Languages][],
+      word: string,
+      index: number,
+      structure?: MorphemeStructure<"English">,
+    }
+  ): GraphemeSpelling[Languages] | null {
+    if (options.lang === "English") {
+      return this.#resolveEnglish(options as EnglishResolveOptions);
+    }
     if (options.lang === "Polish") {
-      return PolishGraphemeResolver.Resolve(
-        options.grapheme as PolishGraphemeSymbol,
-        options.word,
-        options.index,
-        options.graphemes as PolishGraphemeSymbol[]
-      ) as GraphemeSpelling[L];
+      return this.#resolvePolish(options as PolishResolveOptions);
     }
     throw new Error("Unsupported language");
   }
+
+    static #resolveEnglish(options: {
+    lang: "English",
+    grapheme: EnglishGraphemeSymbol,
+    graphemes: EnglishGraphemeSymbol[],
+    word: string,
+    index: number,
+    structure: MorphemeStructure<"English">
+  }): GraphemeSpelling["English"]|null {
+    const letters:Array<Letter["English"]> = options.word
+      .replace(/[^\p{L}]+/gu, "")
+      .toUpperCase()
+      .split("").map(l=>l as Letter["English"]);
+    const ctx = GraphemeContextConstructor.Build<"English">({
+      lang: "English",
+      graphemes: options.graphemes,
+      letters,
+      index: options.index,
+      structure: options.structure
+    });
+    const rule = ENGLISH_RULES_BY_GRAPHEME[options.grapheme];
+    return rule(options.grapheme, ctx, options.word);
+  }
+    static #resolvePolish(options: {
+    lang: "Polish",
+    grapheme: PolishGraphemeSymbol,
+    graphemes: PolishGraphemeSymbol[],
+    word: string,
+    index: number
+  }): GraphemeSpelling["Polish"] {
+
+    const ctx = GraphemeContextConstructor.Build<"Polish">({
+      lang: "Polish",
+      graphemes: options.graphemes,
+      index: options.index,
+      letters: undefined,
+      structure: undefined
+    });
+
+    const rule = POLISH_RULES_BY_GRAPHEME[options.grapheme];
+    return rule(options.grapheme, ctx, options.word);
+  }
+
 }
+
 export class GraphemeUtil {
     static ArePhonemeSame<L extends Languages>(a: Phoneme<L>, b: Phoneme<L>): boolean {
         if (a.State !== b.State) return false;
