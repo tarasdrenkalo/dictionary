@@ -1,0 +1,21 @@
+{
+    "name": "@dictionary/conjugator",
+    "displayName": "Conjugator Package",
+    "description": "A package for handling Conjugations",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "type": "module",
+    "exports":{
+        ".": {
+            "import":"./dist/index.js",
+            "types":"./dist/index.d.ts"
+        }
+    },
+    "dependencies": {
+        "@dictionary/gerund":"1.0.0",
+        "@dictionary/misc":"1.0.0",
+        "pluralize":"^8.0.0"
+    },
+    "files": ["dist"]
+}

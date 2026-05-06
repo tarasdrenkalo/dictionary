@@ -1,0 +1,17 @@
+{
+    "extends":"../../tsconfig.json",
+    "compilerOptions": {
+        "composite": true,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "declaration": true,
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "target": "esnext",
+        "resolveJsonModule": true
+    },
+    "include": ["./src"],
+    "references": [
+        {"path": "../i18n"}
+    ]
+}

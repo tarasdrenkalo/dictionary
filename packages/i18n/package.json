@@ -1,0 +1,16 @@
+{
+    "name": "@dictionary/i18n",
+    "displayName": "Internationalisation Package",
+    "description": "A package for handling internationalisation in the dictionary application",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "type": "module",
+    "exports": {
+        ".": {
+            "import":"./dist/index.js",
+            "types":"./dist/index.d.ts"
+        }
+    },
+    "files": ["dist"]
+}

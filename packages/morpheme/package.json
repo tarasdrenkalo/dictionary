@@ -1,0 +1,20 @@
+{
+    "name": "@dictionary/morpheme",
+    "displayName": "Morpheme Package",
+    "description": "Morpheme Package handler",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "type": "module",
+    "exports": {
+        ".": {
+            "import":"./dist/index.js",
+            "types":"./dist/index.d.ts"
+        }
+    },
+    "dependencies": {
+        "@dictionary/i18n": "^1.0.0",
+        "@dictionary/language":"^1.0.0"
+    },
+    "files": ["dist"]
+}

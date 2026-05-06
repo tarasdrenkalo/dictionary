@@ -1,43 +1,23 @@
 {
   "name": "dictionary",
-  "displayName": "Dictionary (SDK)",
   "version": "1.0.0",
-  "description": "Test",
+  "private": true,
+  "description": "A dictionary application with internationalisation support",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "start": "npm install && tsc && npm link",
-    "build": "tsc",
-    "stop": "npm unlink -g dictionary",
-    "test-create": "node ./build/examples/ex-inserttodb.js",
-    "test-delete": "node ./build/examples/ex-deletefromdb.js",
-    "test-grapheme": "node ./build/examples/ex-grapheme.js",
-    "test-server": "node ./build/api/endpoints.js",
-    "test-wcases": "node ./build/examples/ex-cases.js"
+    "cleanup":"rm -f \"./tsconfig.tsbuildinfo\"",
+    "build": "tsc --build",
+    "start": "npm install",
+    "test": "tsc --build"
+  },
+  "dependencies": {
+    "pluralize": "^8.0.0",
+    "typescript": "^6.0.3"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^25.3.0",
-    "@types/pluralize": "^0.0.33",
-    "typescript": "^5.9.3"
-  },
-  "type": "module",
-  "dependencies": {
-    "chalk": "^5.6.2",
-    "express": "^5.2.1",
-    "mongodb": "^7.1.0",
-    "node": "^25.8.1",
-    "pluralize": "^8.0.0"
-  },
-  "readme": "./README.md",
-  "license": "MIT",
-  "bin": {
-    "dictionary": "./build/cli/cli.js",
-    "dictionary-test": "./build/cli/cli-test.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/tarasdrenkalo/dictionary"
-  },
-  "bugs": {
-    "url": "https://github.com/tarasdrenkalo/dictionary/issues"
+    "@types/pluralize": "^0.0.33"
   }
 }

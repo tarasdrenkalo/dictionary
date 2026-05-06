@@ -1,0 +1,19 @@
+{
+    "name": "@dictionary/definition",
+    "displayName": "Word Definitor Package",
+    "description": "Denotation and Connotation of Word",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "type": "module",
+    "exports": {
+        ".": {
+            "import":"./dist/index.js",
+            "types":"./dist/index.d.ts"
+        }
+    },
+    "dependencies": {
+        "@dictionary/i18n": "^1.0.0"
+    },
+    "files": ["dist"]
+}

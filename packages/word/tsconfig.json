@@ -1,0 +1,23 @@
+{
+    "extends":"../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "composite": true,
+        "declaration": true,
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "target": "esnext",
+        "resolveJsonModule": true
+    },
+    "include": ["./src"],
+    "references": [
+        {"path": "../i18n"},
+        {"path": "../conjugator"},
+        {"path": "../thesaurus"},
+        {"path": "../grapheme"},
+        {"path": "../misc"},
+        {"path": "../morpheme"},
+        {"path": "../definition"}
+    ]
+}

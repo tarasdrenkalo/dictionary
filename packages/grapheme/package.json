@@ -1,0 +1,21 @@
+{
+    "name": "@dictionary/grapheme",
+    "displayName": "Grapheme Package",
+    "description": "A package for handling Graphemes in the dictionary application",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "type": "module",
+    "exports":{
+        ".": {
+            "import":"./dist/index.js",
+            "types":"./dist/index.d.ts"
+        }
+    },
+    "dependencies": {
+        "@dictionary/language":"1.0.0",
+        "@dictionary/i18n":"1.0.0",
+        "@dictionary/morpheme":"1.0.0"
+    },
+    "files": ["dist"]
+}

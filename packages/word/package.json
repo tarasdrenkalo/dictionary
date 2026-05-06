@@ -1,0 +1,23 @@
+{
+    "name": "@dictionary/word",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "type": "module",
+    "exports": {
+        ".": {
+            "import":"./dist/index.js",
+            "types":"./dist/index.d.ts"
+        }
+    },
+    "dependencies": {
+        "@dictionary/i18n": "^1.0.0",
+        "@dictionary/conjugator":"1.0.0",
+        "@dictionary/definition":"1.0.0",
+        "@dictionary/grapheme":"1.0.0",
+        "@dictionary/morpheme":"1.0.0",
+        "@dictionary/thesaurus":"1.0.0",
+        "@dictionary/misc":"1.0.0"
+    },
+    "files": ["dist"]
+}
