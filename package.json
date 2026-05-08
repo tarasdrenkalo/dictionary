@@ -1,23 +1,31 @@
 {
   "name": "dictionary",
   "version": "1.0.0",
-  "private": true,
   "description": "A dictionary application with internationalisation support",
   "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "cleanup":"rm -f \"./tsconfig.tsbuildinfo\"",
     "build": "tsc --build",
     "start": "npm install",
     "test": "tsc --build"
   },
   "dependencies": {
-    "pluralize": "^8.0.0",
-    "typescript": "^6.0.3"
+    "@dictionary/conjugator": "^1.0.0",
+    "@dictionary/definition": "^1.0.0",
+    "@dictionary/gerund": "^1.0.0",
+    "@dictionary/grapheme": "^1.0.0",
+    "@dictionary/i18n": "^1.0.0",
+    "@dictionary/language": "^1.0.0",
+    "@dictionary/misc": "^1.0.0",
+    "@dictionary/morpheme": "^1.0.0",
+    "@dictionary/thesaurus": "^1.0.0",
+    "@dictionary/word": "^1.0.0",
+    "pluralize": "^8.0.0"
   },
   "devDependencies": {
-    "@types/pluralize": "^0.0.33"
+    "@types/pluralize": "^0.0.33",
+    "typescript": "^6.0.3"
   }
 }

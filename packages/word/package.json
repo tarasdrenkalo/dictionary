@@ -17,7 +17,8 @@
         "@dictionary/grapheme":"1.0.0",
         "@dictionary/morpheme":"1.0.0",
         "@dictionary/thesaurus":"1.0.0",
-        "@dictionary/misc":"1.0.0"
+        "@dictionary/misc":"1.0.0",
+        "pluralize":"^8.0.0"
     },
     "files": ["dist"]
 }

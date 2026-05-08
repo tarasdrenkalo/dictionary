@@ -1,27 +1,59 @@
+import pluralize from "pluralize";
 import {i18n, Languages} from "@dictionary/i18n";
-import {Grapheme, GraphemeGenerator} from "@dictionary/grapheme";
+import {Grapheme, GraphemeGenerator } from "@dictionary/grapheme";
 import {MorphemeStructure, MorphemeStructureInstance} from "@dictionary/morpheme";
-import {CaseStructure, TenseContainer, TenseTime, CasePlurality} from "@dictionary/conjugator";
+import {
+    CaseStructure,
+    EnglishTenseBlock,
+    PolishTenseBlock,
+    PolishSingular,
+    TenseContainer,
+    TenseTime,
+    CasePlurality,
+    EnglishVerbConjugator,
+    PolishVerbConjugator,
+    TenseContainerByLanguage,
+    ENGLISH_DECLENCE_NOUN,
+    POLISH_DECLENCE_NOUN,
+    POLISH_DECLENCE_ADJECTIVE
+} from "@dictionary/conjugator";
 import {Gender, PersonPerspective} from "@dictionary/misc";
 import {Definition, DefinitionInstance} from "@dictionary/definition";
 import {Thesaurus} from "@dictionary/thesaurus";
-import { AdverbOptions, ConjunctionOptions, DeterminerOptions, NounOptions, OptionsByPartOfSpeech, PrepositionOptions, PronounOptions, PropernounOptions, VerbOptions, WordOptions } from "./components/argoptions.js";
-import { AdverbVariant, ConjunctionVariant, DeterminerVariant, PrepositionVariant, PronounVariant } from "./components/variants.js";
+import {
+    AdverbOptions,
+    ConjunctionOptions,
+    DeterminerOptions,
+    NounOptions,
+    OptionsByPartOfSpeech,
+    PrepositionOptions,
+    PronounOptions,
+    PropernounOptions,
+    VerbOptions,
+    WordOptions
+} from "./components/argoptions.js";
+import {
+    AdverbVariant,
+    ConjunctionVariant,
+    DeterminerVariant,
+    PrepositionVariant,
+    PronounVariant
+} from "./components/variants.js";
 export interface PartOfSpeech {
-    "Adjective":"Adjective";
-    "Adverb":"Adverb";
-    "Conjunction":"Conjunction";
-    "Determiner":"Determiner";
-    "Exclamation":"Exclamation";
-    "Interjection":"Interjection";
-    "Noun":"Noun";
-    "Numeral":"Numeral";
-    "Participle":"Participle";
-    "Preposition":"Preposition";
-    "Pronoun":"Pronoun";
-    "Propernoun":"Propernoun";
-    "Verb":"Verb";
-    "Unknown":"Unknown";
+    "Adjective":Adjective;
+    "Adverb":Adverb;
+    "Conjunction":Conjunction;
+    "Determiner":Determiner;
+    "Exclamation":Exclamation;
+    "Interjection":Interjection;
+    "Noun":Noun;
+    "Numeral":Numeral;
+    "Participle":Participle;
+    "Preposition":Preposition;
+    "Pronoun":Pronoun;
+    "Propernoun":Propernoun;
+    "Verb":Verb;
+    "Unknown":Word<"Unknown">;
 }
 export type POS = keyof PartOfSpeech;
 export interface UnitWord {
@@ -85,6 +117,7 @@ export interface BaseWord extends UnitWord {
     Euphemisms:Array<WordReference>;
     Contexts:Array<WordReference>;
     Category:i18n<string>;
+    Conjugate():void;
 }
 
 export class Word<P extends POS> implements BaseWord {
@@ -130,10 +163,12 @@ export class Word<P extends POS> implements BaseWord {
     Cases?:CaseStructure<WordReference>;
     CurrentTense?:TenseTime;
     CurrentCase?:keyof CaseStructure<WordReference>;
-    
+
     Euphemisms:Array<WordReference>;
     Contexts:Array<WordReference>;
     Category:i18n<string>;
+    Conjugate():void {}
+
     constructor(pos:P, options:OptionsByPartOfSpeech[keyof OptionsByPartOfSpeech]){
         //Step 1
         if(typeof options.Word.English === "undefined") throw "";
@@ -179,7 +214,7 @@ export class Word<P extends POS> implements BaseWord {
         this.IsDerogatory = {English:options.Derogatory?.English||false};
         this.IsOffensive = {English:options.Offensive?.English||false};
         this.IsShortened = {English:options.Shortened?.English||false};
-        this.IsConjugatable = {English:true};
+        this.IsConjugatable = {English:["Verb", "Adjective", "Participle", "Noun", "Pronoun", "Propernoun"].includes(this.POS)};
         this.IsPropernoun = {English:pos === "Propernoun"};
         this.IsArchaic = {English:options.Archaic?.English||false};
         this.IsNeologism = {English:options.Neologism?.English||false};
@@ -205,7 +240,7 @@ export class Word<P extends POS> implements BaseWord {
             this.IsDerogatory.Polish = options.Derogatory?.Polish||false;
             this.IsOffensive.Polish = options.Offensive?.Polish||false;
             this.IsShortened.Polish = options.Shortened?.Polish||false;
-            this.IsConjugatable.Polish = true;
+            this.IsConjugatable.Polish = this.IsConjugatable.English;
             this.IsPropernoun.Polish = pos === "Propernoun";
             this.IsArchaic.Polish = options.Archaic?.Polish || false;
             this.IsNeologism.Polish = options.Neologism?.Polish || false;
@@ -226,6 +261,27 @@ export class Word<P extends POS> implements BaseWord {
             sources:options.Sources||[],
             creator:"Test"
         });
+
+        this.Conjugate();
+    }
+    static Create<K extends keyof PartOfSpeech>(pos:K, options:OptionsByPartOfSpeech[K]):PartOfSpeech[K] {
+        const Constructors:PartOfSpeech = {
+            "Adjective":new Adjective("Adjective", options),
+            "Adverb":new Adverb("Adverb", options as AdverbOptions),
+            "Conjunction":new Conjunction("Conjunction", options as ConjunctionOptions),
+            "Determiner":new Determiner("Determiner", options as DeterminerOptions),
+            "Exclamation":new Exclamation("Exclamation", options),
+            "Interjection":new Interjection("Interjection", options),
+            "Noun":new Noun("Noun", options),
+            "Numeral":new Numeral("Numeral", options),
+            "Participle":new Participle("Participle", options),
+            "Preposition":new Preposition("Preposition", options as PrepositionOptions),
+            "Pronoun":new Pronoun("Pronoun", options as PronounOptions),
+            "Propernoun":new Propernoun("Propernoun", options),
+            "Verb":new Verb("Verb", options as VerbOptions),
+            "Unknown":new Word("Unknown", options),
+        }
+        return Constructors[pos];
     }
     ToWordReference():WordReference {
         let wr:WordReference = {
@@ -240,6 +296,7 @@ export class Word<P extends POS> implements BaseWord {
         return wr;
     }
     AddAlias(ref:WordReference, c:keyof CaseStructure<WordReference>, p:keyof CasePlurality<WordReference>){
+        this.CurrentCase = c;
         this.Aliases.push(ref);
         if(typeof this.Cases !== "undefined") this.Cases[c][p] = ref;
         return this;
@@ -251,6 +308,263 @@ export class Word<P extends POS> implements BaseWord {
     AddGraphehe(l:keyof i18n<string>, m:Grapheme<Languages>[]){
         this.IPA[l] = m;
         return this;
+    }
+    GENERATE_CONJUGATED_VERBS() {
+            let MergeRef = (
+                    base: WordReference,
+                    translate:Partial<i18n<string>>
+                ): WordReference => {
+                let ref: WordReference = {
+                    ...base,
+                    id: crypto.randomUUID(),
+                    Romanised: { ...(base.Romanised ?? {}) },
+                    IPA: { ...(base.IPA ?? {}) },
+                };
+
+                if (translate.English) {
+                    ref.Romanised.English = translate.English;
+                    ref.IPA.English = GraphemeGenerator.Generate("English", translate.English);
+                }
+                if (translate.Polish) {
+                    ref.Romanised.Polish = translate.Polish;
+                    ref.IPA.Polish = GraphemeGenerator.Generate("Polish", translate.Polish);
+                }
+                return ref;
+            };
+
+            let MapEnglishBlock = (
+                base: WordReference,
+                blocks:{
+                    English:EnglishTenseBlock<string>,
+                    Polish?:PolishTenseBlock<TenseTime, string>
+                }
+            ): EnglishTenseBlock<WordReference> => ({
+                1: {
+                    Singular: MergeRef(base, {
+                        English:blocks.English[1].Singular,
+                        Polish:blocks.Polish?.[1].Singular as any
+                    }),
+                    Plural:   MergeRef(base, {
+                        English:blocks.English[1].Plural,
+                        Polish:blocks.Polish?.[1].Plural as any
+                    }),
+                },
+                2: {
+                    Singular: MergeRef(base, {
+                        English:blocks.English[2].Singular,
+                        Polish:blocks.Polish?.[2].Singular as any}
+                    ),
+                    Plural:   MergeRef(base, {
+                        English:blocks.English[2].Plural,
+                        Polish:blocks.Polish?.[2].Plural}
+                    ),
+                },
+                3: {
+                    Singular: MergeRef(base, {
+                        English:blocks.English[3].Singular,
+                        Polish:blocks.Polish?.[3].Singular as any}
+                    ),
+                    Plural:   MergeRef(base, {
+                        English:blocks.English[3].Plural,
+                        Polish:blocks.Polish?.[3].Plural}
+                    ),
+                },
+            });
+
+            let MapPolishSingular = <P extends TenseTime>(
+                base: WordReference,
+                t:{
+                    Polish:PolishSingular<P, string>,
+                    English?:string
+                }
+            ): PolishSingular<P, WordReference> => {
+                if (typeof t.Polish === "string") {
+                    return MergeRef(base, {English:t.English, Polish:t.Polish}) as PolishSingular<P, WordReference>;
+                }
+                return {
+                    M: MergeRef(base, {English:t.English, Polish:t.Polish.M}),
+                    F: MergeRef(base, {English:t.English, Polish:t.Polish.F}),
+                    ...(t.Polish.N ? { N: MergeRef(base, {English:t.English, Polish:t.Polish.N}) } : {}),
+                } as PolishSingular<P, WordReference>;
+            };
+            let MapPolishBlock = <P extends TenseTime>(
+                base: WordReference,
+                blocks:{
+                    Polish:PolishTenseBlock<P, string>,
+                    English?:EnglishTenseBlock<string>
+                }
+            ): PolishTenseBlock<P, WordReference> => ({
+                1: {
+                    Singular: MapPolishSingular<P>(base, {Polish:blocks.Polish[1].Singular, English:blocks.English?.[1].Singular}),
+                    Plural:   MergeRef(base, {English:blocks.English?.[1].Plural, Polish:blocks.Polish[1].Plural}),
+                },
+                2: {
+                    Singular: MapPolishSingular<P>(base, {Polish:blocks.Polish[2].Singular, English:blocks.English?.[2].Singular}),
+                    Plural:   MergeRef(base, {English:blocks.English?.[3].Plural, Polish:blocks.Polish[3].Plural}),
+                },
+                3: {
+                    Singular: MapPolishSingular<P>(base, {Polish:blocks.Polish[3].Singular, English:blocks.English?.[3].Singular}),
+                    Plural:   MergeRef(base, {English:blocks.English?.[3].Plural, Polish:blocks.Polish[3].Plural}),
+                },
+            });
+            let CONJUGATE_EN = EnglishVerbConjugator.Conjugate(this.Name.English);
+            let CONJUGATE_PL = typeof this.Name.Polish === "string" ? PolishVerbConjugator.Conjugate(this.Name.Polish) : undefined;
+            let Base = this.ToWordReference();
+
+
+            let English: TenseContainerByLanguage<WordReference>["English"] = {
+                Present: {
+                    Simple:      MapEnglishBlock(Base, {English:CONJUGATE_EN.Present.Simple, Polish:CONJUGATE_PL?.Present?.Simple}),
+                    Progressive: MapEnglishBlock(Base,{English:CONJUGATE_EN.Present.Progressive, Polish:CONJUGATE_PL?.Present?.Simple}),
+                    Participle:  MapEnglishBlock(Base, {English:CONJUGATE_EN.Present.Participle, Polish:CONJUGATE_PL?.Past?.Simple}),
+                    Perfect:     MapEnglishBlock(Base, {English:CONJUGATE_EN.Present.Perfect, Polish:CONJUGATE_PL?.Past?.Simple}),
+                },
+                Past: {
+                    Simple:      MapEnglishBlock(Base, {English:CONJUGATE_EN.Past.Simple, Polish:CONJUGATE_PL?.Past?.Simple}),
+                    Progressive: MapEnglishBlock(Base, {English:CONJUGATE_EN.Past.Progressive, Polish:CONJUGATE_PL?.Past?.Simple}),
+                    Participle:  MapEnglishBlock(Base, {English:CONJUGATE_EN.Past.Participle, Polish:CONJUGATE_PL?.Past?.Simple}),
+                    Perfect:     MapEnglishBlock(Base, {English:CONJUGATE_EN.Past.Perfect, Polish:CONJUGATE_PL?.Past?.Simple}),
+                },
+                Future: {
+                    Simple:      MapEnglishBlock(Base, {English:CONJUGATE_EN.Future.Simple, Polish:CONJUGATE_PL?.Future?.Simple}),
+                    Progressive: MapEnglishBlock(Base, {English:CONJUGATE_EN.Future.Progressive, Polish:CONJUGATE_PL?.Future?.Simple}),
+                    Participle:  MapEnglishBlock(Base, {English:CONJUGATE_EN.Future.Participle, Polish:CONJUGATE_PL?.Future?.Simple}),
+                    Perfect:     MapEnglishBlock(Base, {English:CONJUGATE_EN.Future.Perfect, Polish:CONJUGATE_PL?.Future?.Simple}),
+                },
+            };
+            let result: TenseContainerByLanguage<WordReference> = {English};
+
+            if (typeof CONJUGATE_PL !== "undefined") {
+                result.Polish = {
+                    Present: { Simple: MapPolishBlock<"Present">(Base, {Polish:CONJUGATE_PL?.Present?.Simple, English:CONJUGATE_EN.Present.Simple}) },
+                    Past:    { Simple: MapPolishBlock<"Past">(Base,    {Polish:CONJUGATE_PL?.Past?.Simple, English:CONJUGATE_EN.Past.Simple}) },
+                    Future:  { Simple: MapPolishBlock<"Future">(Base,  {Polish:CONJUGATE_PL?.Future?.Simple, English:CONJUGATE_EN.Future.Simple}) },
+                };
+            }
+            this.Tenses = result;
+        }
+    get CONJUGATE_VERB(){
+        return this.Tenses;
+    }
+    GENERATE_CONJUGATED_NOUNS() {
+        let cs:CaseStructure<WordReference> = {
+            Nominative: {},
+            Genitive: {},
+            Dative: {},
+            Accusative: {},
+            Instrumental: {},
+            Locative: {},
+            Vocative: {}
+        }
+        const EnglishDeclensed = ENGLISH_DECLENCE_NOUN(this.Name.English);
+        const PolishDeclensed = (typeof this.Name.Polish === "string"&& typeof this.Gender.Polish === "string")? POLISH_DECLENCE_NOUN(this.Name.Polish, this.Gender.Polish, false):undefined;
+        const allcasesarr:Array<keyof CaseStructure<string>> = [
+            "Nominative", "Genitive", "Dative",
+            "Accusative", "Instrumental", "Locative", "Vocative"
+        ];
+        const allnumbers:Array<keyof CasePlurality<string>> = ["Singular", "Plural"];
+        const ispolishsupported = PolishDeclensed != null;
+        for(const c of allcasesarr) {
+            for(const n of allnumbers) {
+                let rf:WordReference = {
+                    ExcludeFromWordChoice:this.ExcludeFromWordChoice,
+                    Exists:true,
+                    Name:{English:`${EnglishDeclensed[c][n]}`},
+                    Romanised:{English:`${EnglishDeclensed[c][n]}`},
+                    id:crypto.randomUUID() as string,
+                    IPA:{English:GraphemeGenerator.Generate("English", `${EnglishDeclensed[c][n]}`)},
+                    Morpheme:{English:MorphemeStructureInstance.Build("English", `${EnglishDeclensed[c][n]}`)}
+                }
+                if(ispolishsupported) {
+                    rf.Name.Polish = PolishDeclensed[c][n];
+                    rf.Romanised.Polish = PolishDeclensed[c][n];
+                    rf.Morpheme.Polish = MorphemeStructureInstance.Build("Polish", `${PolishDeclensed[c][n]}`);
+                }
+                cs[c][n] = rf;
+                this.AddAlias(rf, c, n);
+            }
+        }
+        this.Cases = cs;
+    }
+    GENERATE_CONJUGATED_ADJECTIVES():void {
+        let cs:CaseStructure<WordReference> = {
+            Nominative: {},
+            Genitive: {},
+            Dative: {},
+            Accusative: {},
+            Instrumental: {},
+            Locative: {},
+            Vocative: {}
+        }
+        const EnglishDeclensed = ENGLISH_DECLENCE_NOUN(this.Name.English);
+        const PolishDeclensed = (typeof this.Name.Polish === "string"&& typeof this.Gender.Polish === "string")? POLISH_DECLENCE_ADJECTIVE(this.Name.Polish):undefined;
+        const allcasesarr:Array<keyof CaseStructure<string>> = [
+            "Nominative", "Genitive", "Dative",
+            "Accusative", "Instrumental", "Locative", "Vocative"
+        ];
+        const allnumbers:Array<keyof CasePlurality<string>> = ["Singular", "Plural"];
+        const ispolishsupported = PolishDeclensed != null;
+        for(const c of allcasesarr) {
+            for(const n of allnumbers) {
+                let rf:WordReference = {
+                    ExcludeFromWordChoice:this.ExcludeFromWordChoice,
+                    Exists:true,
+                    Name:{English:`${EnglishDeclensed[c][n]}`},
+                    Romanised:{English:`${EnglishDeclensed[c][n]}`},
+                    id:crypto.randomUUID() as string,
+                    IPA:{English:GraphemeGenerator.Generate("English", `${EnglishDeclensed[c][n]}`)},
+                    Morpheme:{English:MorphemeStructureInstance.Build("English", `${EnglishDeclensed[c][n]}`)}
+                }
+                if(ispolishsupported) {
+                    rf.Name.Polish = PolishDeclensed[c][n];
+                    rf.Romanised.Polish = PolishDeclensed[c][n];
+                    rf.Morpheme.Polish = MorphemeStructureInstance.Build("Polish", `${PolishDeclensed[c][n]}`);
+                }
+                cs[c][n] = rf;
+                this.AddAlias(rf, c, n);
+            }
+        }
+        this.Cases = cs;
+    }
+    CONJUGATE_ADJECTIVE() {
+        if(typeof this.Cases === undefined) throw "";
+            let cs:CaseStructure<WordReference> = {
+                Nominative: {},
+                Genitive: {},
+                Dative: {},
+                Accusative: {},
+                Instrumental: {},
+                Locative: {},
+                Vocative: {}
+            }
+            const EnglishDeclensed = ENGLISH_DECLENCE_NOUN(this.Name.English);
+            const PolishDeclensed = (typeof this.Name.Polish === "string"&& typeof this.Gender.Polish === "string")? POLISH_DECLENCE_ADJECTIVE(this.Name.Polish):undefined;
+            const allcasesarr:Array<keyof CaseStructure<string>> = [
+                "Nominative", "Genitive", "Dative",
+                "Accusative", "Instrumental", "Locative", "Vocative"
+            ];
+            const allnumbers:Array<keyof CasePlurality<string>> = ["Singular", "Plural"];
+            const ispolishsupported = PolishDeclensed != null;
+            for(const c of allcasesarr) {
+                for(const n of allnumbers) {
+                    let rf:WordReference = {
+                        ExcludeFromWordChoice:this.ExcludeFromWordChoice,
+                        Exists:true,
+                        Name:{English:`${EnglishDeclensed[c][n]}`},
+                        Romanised:{English:`${EnglishDeclensed[c][n]}`},
+                        id:crypto.randomUUID() as string,
+                        IPA:{English:GraphemeGenerator.Generate("English", `${EnglishDeclensed[c][n]}`)},
+                        Morpheme:{English:MorphemeStructureInstance.Build("English", `${EnglishDeclensed[c][n]}`)}
+                    }
+                    if(ispolishsupported) {
+                        rf.Name.Polish = PolishDeclensed[c][n];
+                        rf.Romanised.Polish = PolishDeclensed[c][n];
+                        rf.Morpheme.Polish = MorphemeStructureInstance.Build("Polish", `${PolishDeclensed[c][n]}`);
+                    }
+                    cs[c][n] = rf;
+                    this.AddAlias(rf, c, n);
+                }
+            }
     }
 
     TranslateDenotation(content:i18n<string>, ver:string, curr:boolean=true) {
@@ -307,6 +621,9 @@ export class Adjective extends Word<"Adjective"> {
         }
         return w;
     }
+    Conjugate() {
+        this.GENERATE_CONJUGATED_ADJECTIVES();
+    }
     constructor(pos:"Adjective",options:WordOptions) {
         super(pos, options);
         let comp:i18n<string> = {English:Adjective.GetDegree(options.Word.English.toLowerCase(), true)};
@@ -352,7 +669,6 @@ export class Adverb extends Word<"Adverb">{
     constructor(pos:"Adverb",options:AdverbOptions) {
         super(pos, options);
         this.Kind = options.Kind || "Undetermined";
-
     }
 }
 export class Determiner extends Word<"Determiner"> {
@@ -371,45 +687,49 @@ export class Conjunction extends Word<"Conjunction"> {
 }
 export class Noun extends Word<"Noun"> {
     Kind:string;
-    IsSingular:boolean;
-    IsPlural:boolean;
-    IsCountable:boolean;
-    IsSingularOnly:boolean;
-    IsPluralOnly:boolean;
+    IsSingular:i18n<boolean>;
+    IsPlural:i18n<boolean>;
+    IsCountable:i18n<boolean>;
+    IsSingularOnly:i18n<boolean>;
+    IsPluralOnly:i18n<boolean>;
+    Conjugate() {
+        this.GENERATE_CONJUGATED_NOUNS();
+    }
     constructor(pos:"Noun",options:NounOptions){
         super(pos, options);
         this.Kind = options.Kind || "Undetermined";
-        this.IsSingular = !options.Word.English.endsWith("s");
-        this.IsPlural = options.Word.English.endsWith("s");
-        this.IsCountable = options.Countable||true;
-        this.IsSingularOnly = options.Singleonly||false;
-        this.IsPluralOnly = options.Pluralonly||false;
-    }
-    Pluralise(advanced:boolean=false){
-        const word = this.Name.English;
-        if(word.at(-1) === "y" && !"aeiou".includes(word.at(-2)||"")){
-            return word.slice(0, -1) + "ies";
-        }
-        else if(/(s|sh|ch|x|z)\b/gmi.test(word)){
-            return word + "es";
-        }
-        else if(word.endsWith("um")||word.endsWith("on")){
-            return advanced ? word.slice(0, -2) + "a": word + "s";
-        }
-        else{
-            return word + "s";
+        let EW = options.Word.English;
+        let PW = options.Word.Polish
+        this.IsSingular = {English:pluralize.isSingular(EW)};
+        this.IsPlural = {English:pluralize.isPlural(EW)};
+        this.IsCountable = {English:!(pluralize.plural(EW)==pluralize.singular(EW))};
+        this.IsSingularOnly = {English:(pluralize.plural(EW)==EW)};
+        this.IsPluralOnly = {English:(pluralize.singular(EW)==EW)};
+        if(typeof PW === "string"){
+            this.IsSingular.Polish = true;
+            this.IsPlural.Polish = true;
+            this.IsCountable.Polish = true;
+            this.IsSingularOnly.Polish = false;
+            this.IsPluralOnly.Polish = false;
         }
     }
 }
 export class Verb extends Word<"Verb">{
-    IsTransitive:boolean;
-    IsActive:boolean;
     Kind:string;
+    IsTransitive:i18n<boolean>;
+    IsActive:i18n<boolean>;
+    Conjugate() {
+        this.GENERATE_CONJUGATED_VERBS();
+    }
     constructor(pos:"Verb",options:VerbOptions){
         super(pos, options);
-        this.IsTransitive = options.Transitive||true;
-        this.IsActive = options.Active||true;
+        this.IsTransitive = {English:true};
+        this.IsActive = {English:true};
         this.Kind = options.Kind || "Undetermined";
+        if(typeof this.Name.Polish === "string"){
+            this.IsTransitive.Polish = true;
+            this.IsActive.Polish = true;
+        }
     }
 }
 export class Participle extends Word<"Participle"> {

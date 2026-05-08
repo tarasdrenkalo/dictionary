@@ -49,8 +49,6 @@ export interface NounOptions extends WordOptions  {
     Countable?:boolean;
 }
 export interface VerbOptions extends WordOptions  {
-    Transitive?:boolean;
-    Active?:boolean;
     Kind?:string;
 }
 export interface PronounOptions extends WordOptions  {

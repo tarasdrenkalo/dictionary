@@ -26,6 +26,7 @@
     {"path": "./packages/definition"},
     {"path": "./packages/conjugator"},
     {"path": "./packages/misc"},
-    {"path": "./packages/thesaurus"}
+    {"path": "./packages/thesaurus"},
+    {"path": "./packages/word"}
   ],
 }
