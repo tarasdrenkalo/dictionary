@@ -1,3 +1,5 @@
+export * from "./components/argoptions.js";
+export * from "./components/variants.js";
 import pluralize from "pluralize";
 import {i18n, Languages} from "@dictionary/i18n";
 import {Grapheme, GraphemeGenerator } from "@dictionary/grapheme";
@@ -261,7 +263,7 @@ export class Word<P extends POS> implements BaseWord {
             sources:options.Sources||[],
             creator:"Test"
         });
-
+        if((["Pronoun", "Noun", "Propernoun"]).includes(this.constructor.name as POS)) this.constructor.name as POS;
         this.Conjugate();
     }
     static Create<K extends keyof PartOfSpeech>(pos:K, options:OptionsByPartOfSpeech[K]):PartOfSpeech[K] {
@@ -276,8 +278,8 @@ export class Word<P extends POS> implements BaseWord {
             "Numeral":new Numeral("Numeral", options),
             "Participle":new Participle("Participle", options),
             "Preposition":new Preposition("Preposition", options as PrepositionOptions),
-            "Pronoun":new Pronoun("Pronoun", options as PronounOptions),
-            "Propernoun":new Propernoun("Propernoun", options),
+            "Pronoun":new Pronoun("Noun", options as PronounOptions),
+            "Propernoun":new Propernoun("Noun", options),
             "Verb":new Verb("Verb", options as VerbOptions),
             "Unknown":new Word("Unknown", options),
         }
@@ -733,8 +735,16 @@ export class Verb extends Word<"Verb">{
     }
 }
 export class Participle extends Word<"Participle"> {
+    IsTransitive:i18n<boolean>;
+    IsActive:i18n<boolean>;
     constructor(pos:"Participle",options:VerbOptions){
         super(pos, options);
+        this.IsTransitive = {English: true};
+        this.IsActive = {English: true};
+        if(typeof this.Name.Polish === "string"){
+            this.IsTransitive.Polish = true;
+            this.IsActive.Polish = true;
+        }
         let comp:i18n<string> = {English:Adjective.GetDegree(options.Word.English.toLowerCase(), true)};
         let sup:i18n<string> = {English:Adjective.GetDegree(options.Word.English.toLowerCase(), false)};
         let compref:WordReference = {
@@ -771,9 +781,9 @@ export class Participle extends Word<"Participle"> {
         this.Aliases.push(compref, supref);
     }
 }
-export class Pronoun extends Word<"Pronoun"> {
+export class Pronoun extends Noun {
     Kind:PronounVariant;
-    constructor(pos:"Pronoun",options:PronounOptions){
+    constructor(pos:"Noun",options:PronounOptions){
         super(pos, options);
         this.Kind = options.kind||"Undetermined";
     }
@@ -785,9 +795,9 @@ export class Preposition extends Word<"Preposition"> {
         this.Kind = options.kind||"Undetermined";
     }
 }
-export class Propernoun extends Word<"Propernoun"> {
+export class Propernoun extends Noun {
     Kind:string;
-    constructor(pos:"Propernoun", options:PropernounOptions){
+    constructor(pos:"Noun", options:PropernounOptions){
         super(pos, options);
         this.Kind = options.kind||"";
     }

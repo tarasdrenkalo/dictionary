@@ -1,0 +1,25 @@
+{
+    "name": "@dictionary/api",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "type": "module",
+    "exports":{
+        ".": {
+            "import":"./dist/index.js",
+            "types":"./dist/index.d.ts"
+        }
+    },
+    "dependencies": {
+        "@dictionary/conjugator":"^1.0.0",
+        "@dictionary/i18n":"^1.0.0",
+        "@dictionary/morpheme":"^1.0.0",
+        "@dictionary/grapheme":"^1.0.0",
+        "@dictionary/thesaurus":"^1.0.0",
+        "@dictionary/word":"^1.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^25.3.0"
+    },
+    "files": ["dist"]
+}

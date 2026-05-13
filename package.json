@@ -22,9 +22,11 @@
     "@dictionary/morpheme": "^1.0.0",
     "@dictionary/thesaurus": "^1.0.0",
     "@dictionary/word": "^1.0.0",
+    "mongodb": "^7.2.0",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
+    "@types/node": "^25.6.2",
     "@types/pluralize": "^0.0.33",
     "typescript": "^6.0.3"
   }

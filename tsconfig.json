@@ -2,6 +2,7 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     "module": "nodenext", //esnext
+    "types":["node"],
     "composite": true,
     "moduleResolution": "nodenext", //bundler
     "target": "esnext", //esnext
@@ -27,6 +28,7 @@
     {"path": "./packages/conjugator"},
     {"path": "./packages/misc"},
     {"path": "./packages/thesaurus"},
-    {"path": "./packages/word"}
+    {"path": "./packages/word"},
+    {"path": "./packages/api"}
   ],
 }
