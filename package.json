@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc --build",
     "start": "npm install",
-    "test": "tsc --build"
+    "test": "tsc --build",
+    "startserver":"node ./packages/api/dist/backend/app.js"
   },
   "dependencies": {
     "@dictionary/conjugator": "^1.0.0",
@@ -22,6 +23,7 @@
     "@dictionary/morpheme": "^1.0.0",
     "@dictionary/thesaurus": "^1.0.0",
     "@dictionary/word": "^1.0.0",
+    "@dictionary/api":"^1.0.0",
     "mongodb": "^7.2.0",
     "pluralize": "^8.0.0"
   },

@@ -4,7 +4,6 @@ import {PersonPerspective} from "@dictionary/misc";
 import { WordReference } from "../index.js";
 import { AdverbVariant, ConjunctionVariant, DeterminerVariant, InterjectionVariant, PrepositionVariant, PronounVariant } from "./variants.js";
 export interface WordOptions {
-    Romanised:i18n<string>;
     Biased?:boolean;
     Connotation?:string;
     WordChoiceExclusion?:i18n<boolean>;

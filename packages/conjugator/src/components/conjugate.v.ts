@@ -181,7 +181,7 @@ export class PolishVerbConjugator {
                 },
                 3: {
                     Singular: stem+"e",
-                    Plural: "ą"
+                    Plural: stem + "ą"
                 }
             }
             return result;

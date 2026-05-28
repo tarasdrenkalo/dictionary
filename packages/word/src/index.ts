@@ -70,8 +70,6 @@ export interface UnitWord {
 export interface WordReference extends UnitWord {
     id:string;
     Exists:true;
-    IPA:i18n<Grapheme<Languages>[]>;
-    Morpheme:i18n<MorphemeStructure<Languages>>;
 }
 export interface BaseWord extends UnitWord {
     Exists:true;
@@ -178,8 +176,6 @@ export class Word implements BaseWord {
         let wr:WordReference = {
             Name:this.Name,
             Exists:true,
-            IPA:this.IPA,
-            Morpheme:this.Morpheme,
             ExcludeFromWordChoice:this.ExcludeFromWordChoice,
             id:this.id,
         }
@@ -361,10 +357,10 @@ export class Word implements BaseWord {
     AddToCategory(lang:Languages, name:string) {
         switch(lang) {
             case "English":{
-                this.Category.English ??= name
+                this.Category.English = name
             };
             case "Polish":{
-                this.Category.Polish ??= name
+                this.Category.Polish = name
             }
         };
     }
@@ -379,13 +375,15 @@ export class Word implements BaseWord {
         this.id = crypto.randomUUID();
         this.Contexts = [];
         this.Thesaurus = {};
+        this.Category = {English: "", Polish: ""};
+        this.Morpheme = {English: {} as any, Polish: {} as any};
         this.IsRecordComplete = false;
         this.Exists = true;
         this.Aliases = [];
         this.Name = options.Word;
         this.Euphemisms = options.Euphemisms||[];
         this.POS = (this.constructor.name === "Word" ? "Unknown" : this.constructor.name) as POS;
-
+        this.SetIPA("English", GraphemeGenerator.Generate("English", options.Word.English));
         this.SetWordBooleans("English", {
             animate:options.Animate?.English ?? false,
             abbreviation:options.Abbreviation?.English ?? false,
@@ -403,7 +401,6 @@ export class Word implements BaseWord {
             parasitic:options.Parasitic?.English ?? false
         });
         this.SetGender("English", options.Gender?.English ?? "U");
-        this.SetIPA("English", GraphemeGenerator.Generate("English", options.Word.English));
         this.AddToCategory("English", options.Category?.English ?? "Uncategorised");
         this.SetPersonPerspective("English", options.Perspective?.English ?? 0);
         this.SetMorpheme("English", MorphemeStructureInstance.Build("English", options.Word.English));
@@ -411,7 +408,7 @@ export class Word implements BaseWord {
         this.SetIndexabilityStatus("English", false);
         
         this.ExcludeFromWordChoice = {
-            English: !(this.IsOffensive.English||this.IsProfane.English||this.IsDerogatory.English),
+            English: (this.IsOffensive.English||this.IsProfane.English||this.IsDerogatory.English),
         }
         
         if(typeof options.Word.Polish === "string") {
@@ -438,7 +435,7 @@ export class Word implements BaseWord {
             this.SetPersonPerspective("Polish", options.Perspective?.Polish ?? 0)
             this.SetVisibilityStatus("Polish", false)
             this.SetIndexabilityStatus("Polish", false)
-            this.ExcludeFromWordChoice.Polish = !(this.IsOffensive.Polish||this.IsProfane.Polish||this.IsDerogatory.Polish);
+            this.ExcludeFromWordChoice.Polish = (this.IsOffensive.Polish||this.IsProfane.Polish||this.IsDerogatory.Polish);
 
         }
 
@@ -447,31 +444,29 @@ export class Word implements BaseWord {
             sources:options.Sources||[],
             creator:"Test"
         });
-        this.Conjugate();
     }
     
     static Create<K extends keyof PartOfSpeech>(pos:K, options:OptionsByPartOfSpeech[K]):PartOfSpeech[K] {
-        const Constructors:PartOfSpeech = {
-            "Adjective":new Adjective(options),
-            "Adverb":new Adverb(options as AdverbOptions),
-            "Conjunction":new Conjunction(options as ConjunctionOptions),
-            "Determiner":new Determiner(options as DeterminerOptions),
-            "Exclamation":new Exclamation(options),
-            "Interjection":new Interjection(options as InterjectionOptions),
-            "Noun":new Noun(options),
-            "Numeral":new Numeral(options),
-            "Participle":new Participle(options),
-            "Preposition":new Preposition(options as PrepositionOptions),
-            "Pronoun":new Pronoun(options as PronounOptions),
-            "Propernoun":new Propernoun(options),
-            "Verb":new Verb(options as VerbOptions),
-            "Unknown":new Word(options),
+        switch(pos) {
+            case "Adjective": return new Adjective(options as any) as PartOfSpeech[K];
+            case "Adverb": return new Adverb(options as AdverbOptions) as PartOfSpeech[K];
+            case "Conjunction": return new Conjunction(options as ConjunctionOptions) as PartOfSpeech[K];
+            case "Determiner": return new Determiner(options as DeterminerOptions) as PartOfSpeech[K];
+            case "Exclamation": return new Exclamation(options as any) as PartOfSpeech[K];
+            case "Interjection": return new Interjection(options as InterjectionOptions) as PartOfSpeech[K];
+            case "Noun": return new Noun(options as any) as PartOfSpeech[K];
+            case "Numeral": return new Numeral(options as any) as PartOfSpeech[K];
+            case "Participle": return new Participle(options as any) as PartOfSpeech[K];
+            case "Preposition": return new Preposition(options as PrepositionOptions) as PartOfSpeech[K];
+            case "Pronoun": return new Pronoun(options as PronounOptions) as PartOfSpeech[K];
+            case "Propernoun": return new Propernoun(options as any) as PartOfSpeech[K];
+            case "Verb": return new Verb(options as VerbOptions) as PartOfSpeech[K];
+            case "Unknown": return new Word(options as any) as PartOfSpeech[K];
+            default: return new Word(options as any) as PartOfSpeech[K];
         }
-        return Constructors[pos];
     }
     
     AddAlias(ref:WordReference, c:keyof CaseStructure<WordReference>, p:keyof CasePlurality<WordReference>){
-        this.CurrentCase = c;
         this.Aliases.push(ref);
         if(typeof this.Cases !== "undefined") this.Cases[c][p] = ref;
         return this;
@@ -557,12 +552,9 @@ export class Adjective extends Word {
                     Exists:true,
                     Name:{English:`${EnglishDeclensed[c][n]}`},
                     id:crypto.randomUUID() as string,
-                    IPA:{English:GraphemeGenerator.Generate("English", `${EnglishDeclensed[c][n]}`)},
-                    Morpheme:{English:MorphemeStructureInstance.Build("English", `${EnglishDeclensed[c][n]}`)}
                 }
                 if(typeof PolishDeclensed !== "undefined") {
                     rf.Name.Polish = PolishDeclensed[c][n];
-                    rf.Morpheme.Polish = MorphemeStructureInstance.Build("Polish", `${PolishDeclensed[c][n]}`);
                 }
                 cs[c][n] = rf;
                 this.AddAlias(rf, c, n);
@@ -578,30 +570,21 @@ export class Adjective extends Word {
             Name:comp,
             ExcludeFromWordChoice:this.ExcludeFromWordChoice,
             Exists:true,
-            Morpheme:{English:MorphemeStructureInstance.Build("English",this.Name.English)},
-            id:crypto.randomUUID(),
-            IPA:{English:GraphemeGenerator.Generate("English", comp.English)}
+            id:crypto.randomUUID()
         }
         let supref:WordReference = {
             Name:sup,
             ExcludeFromWordChoice:this.ExcludeFromWordChoice,
             Exists:true,
-            id:crypto.randomUUID(),
-            Morpheme:{English:MorphemeStructureInstance.Build("English",this.Name.English)},
-            IPA:{English:GraphemeGenerator.Generate("English", comp.English)}
+            id:crypto.randomUUID()
         }
         if(typeof this.Name.Polish === "string") {
             compref.Name.Polish = this.Name.Polish;
             compref.ExcludeFromWordChoice.Polish = this.ExcludeFromWordChoice.Polish;
-            compref.IPA.Polish = this.IPA.Polish;
-            compref.Morpheme.Polish = this.Morpheme.Polish
 
             supref.Name.Polish = this.Name.Polish;
             supref.ExcludeFromWordChoice.Polish = this.ExcludeFromWordChoice.Polish;
-            supref.IPA.Polish = this.IPA.Polish;
-            supref.Morpheme.Polish = this.Morpheme.Polish;
         }
-        this.Aliases.push(compref, supref);
         this.Conjugate();
     }
 }
@@ -661,12 +644,9 @@ export class Noun extends Word {
                     Exists:true,
                     Name:{English:`${EnglishDeclensed[c][n]}`},
                     id:crypto.randomUUID() as string,
-                    IPA:{English:GraphemeGenerator.Generate("English", `${EnglishDeclensed[c][n]}`)},
-                    Morpheme:{English:MorphemeStructureInstance.Build("English", `${EnglishDeclensed[c][n]}`)}
                 }
                 if(ispolishsupported) {
                     rf.Name.Polish = PolishDeclensed[c][n];
-                    rf.Morpheme.Polish = MorphemeStructureInstance.Build("Polish", `${PolishDeclensed[c][n]}`);
                 }
                 cs[c][n] = rf;
                 this.AddAlias(rf, c, n);
@@ -704,15 +684,7 @@ export class Verb extends Word {
                 let ref: WordReference = {
                     ...base,
                     id: crypto.randomUUID(),
-                    IPA: { ...(base.IPA ?? {}) },
                 };
-
-                if (translate.English) {
-                    ref.IPA.English = GraphemeGenerator.Generate("English", translate.English);
-                }
-                if (translate.Polish) {
-                    ref.IPA.Polish = GraphemeGenerator.Generate("Polish", translate.Polish);
-                }
                 return ref;
             };
 
@@ -784,7 +756,7 @@ export class Verb extends Word {
                 },
                 2: {
                     Singular: MapPolishSingular<P>(base, {Polish:blocks.Polish[2].Singular, English:blocks.English?.[2].Singular}),
-                    Plural:   MergeRef(base, {English:blocks.English?.[3].Plural, Polish:blocks.Polish[3].Plural}),
+                    Plural:   MergeRef(base, {English:blocks.English?.[2].Plural, Polish:blocks.Polish[2].Plural}),
                 },
                 3: {
                     Singular: MapPolishSingular<P>(base, {Polish:blocks.Polish[3].Singular, English:blocks.English?.[3].Singular}),
@@ -854,29 +826,20 @@ export class Participle extends Word {
         let compref:WordReference = {
             Name:comp,
             ExcludeFromWordChoice:this.ExcludeFromWordChoice,
-            Exists:true,
-            Morpheme:{English:MorphemeStructureInstance.Build("English",this.Name.English)},
-            id:crypto.randomUUID(),
-            IPA:{English:GraphemeGenerator.Generate("English", comp.English)}
+            Exists:true,id:crypto.randomUUID()
         }
         let supref:WordReference = {
             Name:sup,
             ExcludeFromWordChoice:this.ExcludeFromWordChoice,
             Exists:true,
-            id:crypto.randomUUID(),
-            Morpheme:{English:MorphemeStructureInstance.Build("English",this.Name.English)},
-            IPA:{English:GraphemeGenerator.Generate("English", comp.English)}
+            id:crypto.randomUUID()
         }
         if(typeof this.Name.Polish === "string") {
             compref.Name.Polish = this.Name.Polish;
             compref.ExcludeFromWordChoice.Polish = this.ExcludeFromWordChoice.Polish;
-            compref.IPA.Polish = this.IPA.Polish;
-            compref.Morpheme.Polish = this.Morpheme.Polish
 
             supref.Name.Polish = this.Name.Polish;
             supref.ExcludeFromWordChoice.Polish = this.ExcludeFromWordChoice.Polish;
-            supref.IPA.Polish = this.IPA.Polish;
-            supref.Morpheme.Polish = this.Morpheme.Polish;
         }
         this.Aliases.push(compref, supref);
         this.Conjugate()
@@ -905,12 +868,9 @@ export class Participle extends Word {
                     Exists:true,
                     Name:{English:`${EnglishDeclensed[c][n]}`},
                     id:crypto.randomUUID() as string,
-                    IPA:{English:GraphemeGenerator.Generate("English", `${EnglishDeclensed[c][n]}`)},
-                    Morpheme:{English:MorphemeStructureInstance.Build("English", `${EnglishDeclensed[c][n]}`)}
                 }
                 if(typeof PolishDeclensed !== "undefined") {
                     rf.Name.Polish = PolishDeclensed[c][n];
-                    rf.Morpheme.Polish = MorphemeStructureInstance.Build("Polish", `${PolishDeclensed[c][n]}`);
                 }
                 cs[c][n] = rf;
                 this.AddAlias(rf, c, n);

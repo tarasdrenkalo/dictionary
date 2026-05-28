@@ -4,22 +4,26 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "type": "module",
-    "exports":{
+    "exports": {
         ".": {
-            "import":"./dist/index.js",
-            "types":"./dist/index.d.ts"
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
         }
     },
     "dependencies": {
-        "@dictionary/conjugator":"^1.0.0",
-        "@dictionary/i18n":"^1.0.0",
-        "@dictionary/morpheme":"^1.0.0",
-        "@dictionary/grapheme":"^1.0.0",
-        "@dictionary/thesaurus":"^1.0.0",
-        "@dictionary/word":"^1.0.0"
+        "@dictionary/conjugator": "^1.0.0",
+        "@dictionary/grapheme": "^1.0.0",
+        "@dictionary/i18n": "^1.0.0",
+        "@dictionary/morpheme": "^1.0.0",
+        "@dictionary/thesaurus": "^1.0.0",
+        "@dictionary/word": "^1.0.0",
+        "express": "^5.2.1"
     },
     "devDependencies": {
+        "@types/express": "^5.0.6",
         "@types/node": "^25.3.0"
     },
-    "files": ["dist"]
+    "files": [
+        "dist"
+    ]
 }
