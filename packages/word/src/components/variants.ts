@@ -1,4 +1,6 @@
 export type GenericVariant = "Undetermined";
+export type InterjectionVariant = GenericVariant|"Volitive"|"Emotive"|"Cognitive";
+
 export type AdverbVariant = GenericVariant | "Manner"|"Place"|"Time"|"Degree"|"Frequency";
 export type DeterminerVariant = GenericVariant | "Definite"|"Indefinite"|"Quantifier"|"Demonstrative"|"Distributive"|"Possessive";
 export type ConjunctionVariant = GenericVariant | "Coordinating"|"Subordinating"|"Correlative"|"Conjuctive";
@@ -18,6 +20,6 @@ export interface VariantByPartOfSpeech {
     Conjunction:ConjunctionVariant;
     Propernoun:GenericVariant;
     Exclamation:GenericVariant;
-    Interjection:GenericVariant;
+    Interjection:InterjectionVariant;
     Unknown:GenericVariant;
 }

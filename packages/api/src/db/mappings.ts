@@ -3,7 +3,6 @@ import { Definition } from "@dictionary/definition";
 import { WordReference, PartOfSpeech } from "@dictionary/word";
 import { Thesaurus } from "@dictionary/thesaurus";
 import { Grapheme } from "@dictionary/grapheme";
-import { MorphemeStructure } from "@dictionary/morpheme";
 import { Gender, PersonPerspective } from "@dictionary/misc";
 import { i18n, Languages } from "@dictionary/i18n";
 import { TenseContainer,TenseTime, CaseStructure } from "@dictionary/conjugator";
@@ -11,14 +10,12 @@ import { DictionaryDBModFlags, DictionaryDBSEOFlags } from "./flags.js";
 export interface DictionaryDBWordsCollection {
     WordId:string;
     Word:i18n<string>,
-    Romanised:i18n<string>,
     Aliases:Array<WordReference>,
     Thesaurus:Thesaurus<WordReference>,
 }
 export interface DictionaryDBMorphemeCollection {
     WordIds:Array<string>,
-    IPA:i18n<Grapheme<Languages>[]>,
-    Morpheme:i18n<MorphemeStructure<Languages>>,
+    IPA:i18n<Grapheme<Languages>[]>
 }
 export interface DictionaryDBDefinitionsCollection {
     WordIds:string[],

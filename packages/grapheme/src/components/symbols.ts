@@ -1,8 +1,8 @@
 import {Languages} from "@dictionary/i18n";
 import { GraphemeContext } from "./context.js";
-export type EnglishGraphemeSymbol = "A"|"B"|"C"|"D"|"E"|
-    "F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|
-    "T"|"U"|"V"|"W"|"X"|"Y"|"Z"|"WR"|"KN"|"AY"|"EI"|"AU"|"AW"|"OI"|
+export type EnglishGraphemeSymbol = "A"|"B"|"BB"|"C"|"CC"|"D"|"DD"|"E"|
+    "F"|"FF"|"G"|"GG"|"H"|"I"|"J"|"K"|"L"|"LL"|"M"|"MM"|"N"|"NN"|"O"|"P"|"PP"|"Q"|"R"|"RR"|"S"|"SS"|
+    "T"|"TT"|"U"|"V"|"VV"|"W"|"X"|"XX"|"Y"|"Z"|"ZZ"|"WR"|"KN"|"AY"|"EI"|"AU"|"AW"|"EW"|"OI"|
     "OY"|"EU"|"ER"|"IR"|"UR"|"OR"|"EAR"|"AR"|"EER"|"AIR"|"URE"|"GN"|"SH"|"QU"|"GH"|"CH"|"CZ"|"TH"|"LD"|"MB"|"PH"|"NG"|"CK"|
     "EE"|"EA"|"AI"|"OA"|"IE"|"OU"|"OW"|"WH"|"OO"|"TCH"|"DGE"|"IGH"|"A_E"|"O_E"|"U_E"|"E_E"|"I_E";
 export type PolishGraphemeSymbol = "A"|"Ą"|"B"|"C"|"Ć"|"D"|"E"|"Ę"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"Ł"|"M"|"N"|
@@ -12,14 +12,14 @@ export interface GraphemeSymbol {
     English:EnglishGraphemeSymbol
     Polish: PolishGraphemeSymbol;
 }
-export type EnglishGraphemeSpelling = ""|"æ"|"eɪ"|"ɑ"|"ɔ"|"ə"|"ɛ"|"iː"|"ɪ"|
+export type EnglishGraphemeSpelling = ""|"æ"|"eɪ"|"ɑ"|"ɔ"|"ə"|"ɛ"|"iː"|"ɪ"|"ɡz"|
     "ə"|"ɪ"|"aɪ"|"iː"|"ɑː"|"ɒ"|"ɑ"|"oʊ"|"ʌ"|"ə"|"uː"|"ʌ"|"juː"|
     "uː"|"ʊ"|"ə"|"ɪ"|"aɪ"|"iː"|"j"|"b"|"k"|"mb"|"ld"|"s"|"d"|"f"|"ɡ"|
     "dʒ"|"h"|"dʒ"|"k"|"l"|"m"|"n"|"ŋ"|"p"|"k"|"r"|"ɹ"|
     "s"|"z"|"ʒ"|"t"|"tʃ"|"v"|"w"|"ks"|"gz"|"z"|"z"|
     "ʃ"|"tʃ"|"k"|"ʃ"|"θ"|"ð"|"f"|"ŋ"|"k"|"f"|"ɡ"|""|"ː"|"w"|
     "hw"|"kw"|"r"|"n"|"n"|"iː"|"iː"|"ɛ"|"eɪ"|"eɪ"|"eɪ"|"oʊ"|
-    "oʊ"|"aʊ"|"aʊ"|"ʌ"|"uː"|"oʊ"|"uː"|"ʊ"|"aɪ"|"iː"|"iː"|"eɪ"|
+    "oʊ"|"aʊ"|"aʊ"|"ʌ"|"uː"|"ər"|"oʊ"|"uː"|"ʊ"|"aɪ"|"iː"|"iː"|"eɪ"|
     "ɔː"|"ɔː"|"ɔɪ"|"ɔɪ"|"juː"|"uː"|"tʃ"|"dʒ"|"aɪ"|
     "ɪə"|"ɛə"|"ɝ"|"ɛə"|"jʊə"|"ʊə";
 export type PolishGraphemeSpelling = ""|"a"|"ɔ̃"|"b"|"t͡s"|"t͡ɕ"|"t͡ɕi"|"x"|"t͡ʂ"|"d"|"d͡z"|"d͡ʑ"|"d͡ʐ"|"ɛ"|

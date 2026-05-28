@@ -4,15 +4,15 @@ import {i18n, Languages} from "@dictionary/i18n";
 import { DictionaryDBModFlags,DictionaryDBSEOFlags } from "./flags.js";
 import { DictionaryDBCollections, DictionaryDBDefinitionsCollection, DictionaryDBEditorialCollection, DictionaryDBFilters, DictionaryDBLexemeCollection, DictionaryDBMorphemeCollection, DictionaryDBSearchQuery, DictionaryDBWordsCollection } from "./mappings.js";
 export class DictionaryDBUtil {
-    static BuildModFlags(w:Word<POS>):i18n<DictionaryDBModFlags[]> {
+    static BuildModFlags(w:Word):i18n<DictionaryDBModFlags[]> {
         const flags:i18n<DictionaryDBModFlags[]> = {
             English:new Array<DictionaryDBModFlags>()
         }
         if(typeof w.Name.Polish === "string"){
             flags.Polish = new Array<DictionaryDBModFlags>();
         }
-        const rules: Array<[keyof Word<POS>, DictionaryDBModFlags, boolean]> = [
-            ["HasBias", "Bias", true],
+        const rules: Array<[keyof Word, DictionaryDBModFlags, boolean]> = [
+            ["IsBiased", "Bias", true],
             ["IsConjugatable", "NotConjugatable", false],
             ["IsColloquial","Colloquialism",true],
             ["IsUsedFormally","InformalOnly",false],
@@ -53,7 +53,7 @@ export class DictionaryDBUtil {
         }
         return flags;
     }
-    static BuildSEOFlags(w:Word<POS>):i18n<Array<DictionaryDBSEOFlags>> {
+    static BuildSEOFlags(w:Word):i18n<Array<DictionaryDBSEOFlags>> {
         const flags:i18n<Array<DictionaryDBSEOFlags>> ={
             English:new Array<DictionaryDBSEOFlags>()
         }
@@ -66,7 +66,7 @@ export class DictionaryDBUtil {
         }
         return flags;
     }
-    static BuildLexeme(w:Word<POS>):DictionaryDBLexemeCollection {
+    static BuildLexeme(w:Word):DictionaryDBLexemeCollection {
         const NeedKind =
             w instanceof Adverb || w instanceof Determiner ||
             w instanceof Conjunction || w instanceof Pronoun ||
@@ -97,14 +97,13 @@ export class DictionaryDBUtil {
     static EditorialFingerPrint(d:DictionaryDBEditorialCollection) {
         return JSON.stringify(d, (k, v)=>typeof v !=="undefined" ? v:null)
     }
-    static PackSingle(w:Word<POS>):DictionaryDBCollections {
+    static PackSingle(w:Word):DictionaryDBCollections {
         const flags = this.BuildModFlags(w);
         const seo = this.BuildSEOFlags(w);
         const WordIds = w.Aliases.map(a => a.id);
 
         let result:DictionaryDBCollections = {
             Word: {
-                Romanised:w.Romanised,
                 WordId: w.id,
                 Word: w.Name,
                 Aliases: w.Aliases,
@@ -118,7 +117,6 @@ export class DictionaryDBUtil {
             IPA: {
                 WordIds: [w.id],
                 IPA: w.IPA,
-                Morpheme: w.Morpheme
             },
             Lexeme: this.BuildLexeme(w),
             Editorial: {
@@ -131,7 +129,7 @@ export class DictionaryDBUtil {
         };
         return result;
     }
-    static Pack(...words: Word<POS>[]) {
+    static Pack(...words: Word[]) {
         const IpaMap = new Map<string, DictionaryDBMorphemeCollection>();
         const LexMap = new Map<string, DictionaryDBLexemeCollection>();
         const DefMap = new Map<string, DictionaryDBDefinitionsCollection>();
@@ -150,7 +148,6 @@ export class DictionaryDBUtil {
             out.Word.push(p.Word);
             const IpaKey = JSON.stringify({
                 IPA: p.IPA.IPA ?? null,
-                Morpheme: p.IPA.Morpheme ?? null
             });
             const IpaExisting = IpaMap.get(IpaKey);
             if (IpaExisting) {

@@ -1,5 +1,5 @@
 import { Languages } from "@dictionary/i18n";
-import { EnglishLetter, LANGUAGE_CONSTANT } from "@dictionary/language";
+import { EnglishLetter } from "@dictionary/language";
 import { MorphemeStructure } from "@dictionary/morpheme";
 import { EnglishGraphemeContextOptions, GraphemeContextConstructor } from "../components/context.js";
 import { ENGLISH_RULES_BY_GRAPHEME, POLISH_RULES_BY_GRAPHEME } from "../components/rules.js";
@@ -44,7 +44,7 @@ export class GraphemeResolver {
         }
         const ctx = GraphemeContextConstructor.Build("English", r);
         const rule = ENGLISH_RULES_BY_GRAPHEME[options.grapheme as EnglishGraphemeSymbol];
-        return rule(options.grapheme as EnglishGraphemeSymbol, ctx, options.word);
+        return rule.British(options.grapheme as EnglishGraphemeSymbol, ctx, options.word);
       }
       case "Polish": {
         const ctx = GraphemeContextConstructor.Build("Polish", {

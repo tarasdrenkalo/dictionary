@@ -14,7 +14,7 @@ export const ENGLISH_LANGUAGE_CONSTANT:Language<"English"> = {
         return typeof l !== "undefined" ? l: void l;
     },
     VOWELS:["A", "O", "Y", "E", "U", "I"],
-    GRAPHEME_REGEX:/^(TCH|DGE|IGH|EER|EAR|AIR|URE|AR|ER|IR|OR|UR|SH|CH|CZ|TH|PH|NG|CK|QU|WH|GH|KN|WR|GN|AI|AY|EE|EA|OA|IE|EI|OU|OW|OO|AU|AW|OI|OY|EU)/i,
+    GRAPHEME_REGEX:/BB|CC|DD|FF|GG|LL|MM|NN|PP|RR|TT|VV|XX|ZZ|GH|KN|WR|WH|MB|LD|SS|A_E|E_E|I_E|O_E|U_E|AI|AY|EE|EA|OA|IE|EI|OU|OW|EW|OO|AU|AW|AR|ER|IR|UR|OR|OI|OY|EU|EER|EAR|AIR|URE|SH|CZ|CH|TH|GN|PH|NG|CK|QU|TCH|DGE|IGH/i,
 }
 export const POLISH_LANGUAGE_CONSTANT:Language<"Polish"> = {
     Name:"Polish",

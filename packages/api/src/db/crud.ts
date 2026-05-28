@@ -2,6 +2,7 @@ import {
     Filter,
     MongoClient
 } from "mongodb";
+import {i18n, Languages} from "@dictionary/i18n";
 import {
     Word,
     PartOfSpeech,
@@ -37,7 +38,7 @@ import {
     DictionaryDBFilters,
     DictionaryDBSearchQuery
 } from "./mappings.js";
-import { Definition } from "@dictionary/definition";
+import { Definition, DefinitionInstance } from "@dictionary/definition";
 import { 
     CasePlurality,
     CaseStructure
@@ -62,7 +63,6 @@ export class DictionaryDB {
                     $setOnInsert: {
                         WordId: w.WordId,
                         Word: w.Word,
-                        Romanised:w.Romanised,
                         Thesaurus: w.Thesaurus
                     },
                     $addToSet: { Aliases: { $each: w.Aliases ?? [] } }
@@ -98,7 +98,7 @@ export class DictionaryDB {
         await this.Collection("Morpheme").bulkWrite(
             DictionaryDBUtil.BuildUpserts(
                 data.IPA,
-                i => ({ IPA: i.IPA, Morpheme: i.Morpheme }),
+                i => ({ IPA: i.IPA}),
                 i => ({ $addToSet: { WordIds: { $each: i.WordIds } } })
             )
         );
@@ -123,7 +123,7 @@ export class DictionaryDB {
     static async DeleteById(...ids: string[]) {
         if (ids.length === 0) return;
         await this.Client.connect();
-        const UpdateCmds = [
+        const UpdateCmds: Array<any> = [
             {
                 updateMany: {
                     filter: { WordIds: { $in: ids } },
@@ -146,7 +146,7 @@ export class DictionaryDB {
                 {
                     updateMany: {
                         filter: { "Aliases.WordId": { $in: ids } },
-                        update: { $pull: { Aliases: { WordId: { $in: ids } } } }
+                        update: { $pull: { "Aliases": { "WordId": { $in: ids } } } } as any
                     }
                 }
             ]);
@@ -168,23 +168,23 @@ export class DictionaryDB {
                 ).map(d => d.WordId)
             );
             const ValidIdArray = [...ValidIds];
-            const UpdateCmds = [
+            const UpdateCmds: Array<any> = [
+                {
+                    deleteMany: {
+                        filter:{WordIds: { $size: 0 }}
+                    }
+                },
                 {
                     updateMany:{
                         filter:{},
                         update:{ $pull: { WordIds: { $nin: ValidIdArray } } }
-                    }
-                },
-                {
-                    deleteMany: {
-                        filter:{WordIds: { $size: 0 }}
                     }
                 }
             ]
 
             await this.Collection("Words").updateMany(
                 {},
-                { $pull: { Aliases: { WordId: { $nin: ValidIdArray } } } }
+                { $pull: { "Aliases": { "WordId": { $nin: ValidIdArray } } } } as any
             );
             await this.Collection("Definitions").bulkWrite(UpdateCmds)
             await this.Collection("Editorial").bulkWrite(UpdateCmds)
@@ -194,7 +194,7 @@ export class DictionaryDB {
             await this.Client.close();
         }
     }
-    static async Search(q: DictionaryDBSearchQuery): Promise<Word<keyof PartOfSpeech>[]> {
+    static async Search(q: DictionaryDBSearchQuery): Promise<Word[]> {
         await this.Client.connect();
         const lang = q.language ?? "English";
         const raw = q.word ?? "";
@@ -302,7 +302,7 @@ export class DictionaryDB {
             this.Collection("Editorial").find({ WordIds: { $in: ids } }).toArray(),
             this.Collection("Definitions").find({ WordIds: { $in: ids } }).toArray()
         ]);
-        const result: Word<keyof PartOfSpeech>[] = [];
+        const result: Word[] = [];
         for (const wdoc of WordDocs) {
             const id = wdoc.WordId;
             const lex = lexemes.find(l => l.WordIds.includes(id));
@@ -310,14 +310,13 @@ export class DictionaryDB {
             const def = defs.find(d => d.WordIds.includes(id));
             const IpaEntry = ipa.find(i => i.WordIds.includes(id));
             const edit = editorial.find(e => e.WordIds.includes(id));
-            const word:Word<keyof PartOfSpeech> = Word.Create(lex.POS, {
+            const word:Word = Word.Create(lex.POS, {
                 word: wdoc.Word,
                 meaning: { English: "" }
             });
         
             word.id = id;
             word.Name = wdoc.Word;
-            word.Romanised = wdoc.Romanised;
             word.Aliases = wdoc.Aliases ?? [];
 
             if (IpaEntry) {
@@ -325,41 +324,45 @@ export class DictionaryDB {
                 word.Morpheme = IpaEntry.Morpheme;
             }
             if (def) {
-                word.Denotation = Definition.FromJSON(def.Denotation);
+                word.Denotation = DefinitionInstance.FromJSON(def.Denotation);
                 if (def.Connotation)
-                    word.Connotation = Definition.FromJSON(def.Connotation);
+                    word.Connotation = DefinitionInstance.FromJSON(def.Connotation);
             }
             if (edit) {
-                const f = new Set(edit.Flags);
-                word.IsRecordComplete = !f.has("Incomplete");
-                word.HasBias = f.has("Bias");
-                word.IsColloquial = f.has("Colloquialism");
-                word.IsUsedCasually = !f.has("FormalOnly");
-                word.IsUsedFormally = !f.has("InformalOnly");
-                word.IsProfane = f.has("Profane");
-                word.IsDerogatory = f.has("Derogatory");
-                word.IsOffensive = f.has("Offensive");
-                word.IsArchaic = f.has("Archaic");
-                word.IsNeologism = f.has("Neologism");
-                word.IsParasitic = f.has("Parasitic");
+                word.IsRecordComplete = !edit.Flags.has("Incomplete");
                 word.Visible = edit.SEO.includes("Visible");
                 word.Indexable = edit.SEO.includes("Indexable");
-                word.IsShortened = f.has("Shortened");
-                if (word instanceof Noun) {
-                    word.IsSingular = f.has("Singular");
-                    word.IsPlural = f.has("Plural");
-                    word.IsSingularOnly = f.has("SingularOnly");
-                    word.IsPluralOnly = f.has("PluralOnly");
-                    word.IsCountable = !f.has("Uncountable");
+                word.IsRecordComplete = edit.Complete;
+                for(const lang of Object.keys(word.Name) as Languages[]) {
+                    const f = new Set<DictionaryDBModFlags>(edit.Flags[lang]);
+                    word.SetWordBooleans(lang, {
+                        biased:f.has("Bias"),
+                        colloquialism:f.has("Colloquialism"),
+                        informalusage:!f.has("FormalOnly"),
+                        formalusage:!f.has("InformalOnly"),
+                        profanity:f.has("Profane"),
+                        derogatory:f.has("Derogatory"),
+                        offensive:f.has("Offensive"),
+                        archaism:f.has("Archaic"),
+                        neologism:f.has("Neologism"),
+                        parasitic:f.has("Parasitic"),
+                        shortcut:f.has("Shortened"),
+                        animate:f.has("Animate"),
+                        abbreviation:f.has("Abbreviation"),
+                        conjugatable:f.has("Conjugatable")
+                    })
+                    if (word instanceof Noun) {
+                        word.IsSingular[lang] = f.has("Singular");
+                        word.IsPlural[lang] = f.has("Plural");
+                        word.IsSingularOnly[lang] = f.has("SingularOnly");
+                        word.IsPluralOnly[lang] = f.has("PluralOnly");
+                        word.IsCountable[lang] = !f.has("Uncountable");
+                    }
+                    if (word instanceof Verb || word instanceof Participle) {
+                        word.IsTransitive[lang] = f.has("Transitive");
+                        word.IsActive[lang] = f.has("Active");
+                    }
                 }
-                if (word instanceof Verb || word instanceof Participle) {
-                    word.IsTransitive = f.has("Transitive");
-                    word.IsActive = f.has("Active");
-                }
-            }
-            if (word instanceof Adjective || word instanceof Participle) {
-                word.Comparative = lex.Comparative ?? null;
-                word.Superlative = lex.Superlative ?? null;
             }
             word.Gender = lex.Gender;
             word.PersonPerspective = lex.PersonPerspective;

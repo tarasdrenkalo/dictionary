@@ -1,8 +1,8 @@
 import {Gender} from "@dictionary/misc";
-import {i18n} from "@dictionary/i18n";
+import {i18n, Languages} from "@dictionary/i18n";
 import {PersonPerspective} from "@dictionary/misc";
 import { WordReference } from "../index.js";
-import { AdverbVariant, ConjunctionVariant, DeterminerVariant, PrepositionVariant, PronounVariant } from "./variants.js";
+import { AdverbVariant, ConjunctionVariant, DeterminerVariant, InterjectionVariant, PrepositionVariant, PronounVariant } from "./variants.js";
 export interface WordOptions {
     Romanised:i18n<string>;
     Biased?:boolean;
@@ -30,7 +30,9 @@ export interface WordOptions {
     Parasitic?:i18n<boolean>;
     Sources?:Array<string>;
 }
-
+export interface InterjectionOptions extends WordOptions {
+    Kind?:InterjectionVariant;
+}
 export interface AdverbOptions extends WordOptions {
     Kind?:AdverbVariant;
 }
@@ -73,6 +75,6 @@ export interface OptionsByPartOfSpeech {
     Conjunction: ConjunctionOptions;
     Propernoun: PropernounOptions;
     Exclamation: WordOptions;
-    Interjection: WordOptions;
+    Interjection: InterjectionOptions;
     Unknown: WordOptions;
 }
